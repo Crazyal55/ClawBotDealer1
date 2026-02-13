@@ -18,6 +18,7 @@ Welcome to the Car Dealership Scraper Platform documentation.
 - [START.md](./START.md) - First-time setup steps
 
 ### Architecture & Design
+- [TECH_STACK.md](./TECH_STACK.md) - **Technology choices & rationale**
 - [HYBRID_DB_ARCHITECTURE.md](./HYBRID_DB_ARCHITECTURE.md) - Database design for RAG system
 - [OVERNIGHT_SUMMARY_FINAL.md](./OVERNIGHT_SUMMARY_FINAL.md) - Complete feature list and architecture
 

@@ -290,6 +290,7 @@ dealership-platform/
 
 ### Core Documentation
 - **[Documentation Index](docs/README.md)** - All docs overview
+- **[TECH_STACK.md](docs/TECH_STACK.md)** - **Technology choices & rationale**
 - **[TESTING.md](docs/TESTING.md)** - Comprehensive testing procedures
 - **[HYBRID_DB_ARCHITECTURE.md](docs/HYBRID_DB_ARCHITECTURE.md)** - Database design for RAG
 
