@@ -1,125 +1,142 @@
-# Car Scraper Dashboard
+# Documentation Index
 
-Dev tool for building car inventory databases from curl commands.
+Welcome to the Car Dealership Scraper Platform documentation.
 
-## Features
+## 📚 Quick Links
 
-- **Paste any curl command** from browser DevTools → extracts car data automatically
-- **Maximal data extraction**: VIN, price, mileage, specs, features, images, dealer info
-- **Smart parsing**: Detects single car pages vs search results
-- **SQLite database**: Persistent storage for all scraped vehicles
-- **Dashboard UI**: Search, filter, view details, export CSV
-- **JSON-LD support**: Extracts structured data when available
+- [Main README](../README.md) - Quick start and setup guide
+- [TESTING.md](./TESTING.md) - Comprehensive testing procedures
 
-## Quick Start
+---
 
+## 📖 Documentation by Topic
+
+### Getting Started
+- [QUICK_START.md](./QUICK_START.md) - 5-minute setup guide
+- [SETUP_GUIDE.md](./SETUP_GUIDE.md) - Detailed setup instructions
+- [SETUP_README.md](./SETUP_README.md) - Quick setup reference
+- [START.md](./START.md) - First-time setup steps
+
+### Architecture & Design
+- [HYBRID_DB_ARCHITECTURE.md](./HYBRID_DB_ARCHITECTURE.md) - Database design for RAG system
+- [OVERNIGHT_SUMMARY_FINAL.md](./OVERNIGHT_SUMMARY_FINAL.md) - Complete feature list and architecture
+
+### Features & Development
+- [ALL_NIGHT_FEATURES.md](./ALL_NIGHT_FEATURES.md) - Feature breakdown
+- [FEATURE_BACKLOG.md](./FEATURE_BACKLOG.md) - Planned features
+- [NEW_FEATURES_GUIDE.md](./NEW_FEATURES_GUIDE.md) - Adding new features
+
+### Data & Testing
+- [PLACEHOLDER_DATA_README.md](./PLACEHOLDER_DATA_README.md) - Sample data explanation
+- [TESTING.md](./TESTING.md) - Testing procedures
+
+### Roadmap & Planning
+- [TASK_SCHEDULE.md](./TASK_SCHEDULE.md) - 8-week development roadmap
+- [TASK_SCHEDULE_UPDATED.md](./TASK_SCHEDULE_UPDATED.md) - Updated task schedule
+
+### Polish & Improvements
+- [POLISH_WISHLIST.md](./POLISH_WISHLIST.md) - UI/UX improvements
+- [MORNING_READINESS.md](./MORNING_READINESS.md) - Daily setup checklist
+
+### Utilities
+- [NIGHT_BUILD_SUMMARY.md](./NIGHT_BUILD_SUMMARY.md) - Build summary
+- [FIX_GIT_IDENTITY.md](./FIX_GIT_IDENTITY.md) - Git configuration
+
+---
+
+## 🎯 Where to Start?
+
+### New Users
+1. Read [Main README](../README.md)
+2. Follow [QUICK_START.md](./QUICK_START.md)
+3. Run [TESTING.md](./TESTING.md) tests
+
+### Developers
+1. Review [HYBRID_DB_ARCHITECTURE.md](./HYBRID_DB_ARCHITECTURE.md)
+2. Check [TASK_SCHEDULE.md](./TASK_SCHEDULE.md)
+3. Read [ALL_NIGHT_FEATURES.md](./ALL_NIGHT_FEATURES.md)
+
+### System Administrators
+1. Read [SETUP_GUIDE.md](./SETUP_GUIDE.md)
+2. Review [PLACEHOLDER_DATA_README.md](./PLACEHOLDER_DATA_README.md)
+3. Check [MORNING_READINESS.md](./MORNING_READINESS.md)
+
+---
+
+## 📊 Documentation Structure
+
+```
+docs/
+├── README.md                   # This file - documentation index
+├── TESTING.md                  # Testing guide
+├── HYBRID_DB_ARCHITECTURE.md  # Database design
+├── OVERNIGHT_SUMMARY_FINAL.md  # Complete feature list
+├── TASK_SCHEDULE.md            # Development roadmap
+├── QUICK_START.md              # Quick start guide
+├── SETUP_GUIDE.md              # Detailed setup
+├── FEATURE_BACKLOG.md          # Planned features
+├── POLISH_WISHLIST.md         # UI improvements
+└── ...                        # Additional documentation
+```
+
+---
+
+## 🔍 Common Questions
+
+**Q: How do I set up the platform?**
+A: Start with [QUICK_START.md](./QUICK_START.md)
+
+**Q: How does the database work?**
+A: Read [HYBRID_DB_ARCHITECTURE.md](./HYBRID_DB_ARCHITECTURE.md)
+
+**Q: What features are planned?**
+A: Check [TASK_SCHEDULE.md](./TASK_SCHEDULE.md)
+
+**Q: How do I test the platform?**
+A: Follow [TESTING.md](./TESTING.md)
+
+---
+
+## 📝 Contributing to Documentation
+
+When updating documentation:
+1. Keep it simple and clear
+2. Include code examples
+3. Add diagrams where helpful
+4. Update this index for new docs
+
+---
+
+## 🚀 Quick Reference
+
+### Setup Commands
 ```bash
-# Install dependencies
 npm install
-
-# Start the server
 npm start
-
-# Open dashboard
-# Navigate to http://localhost:3000
 ```
 
-## Usage
+### Testing
+```bash
+# Run tests
+node ../test.js
 
-1. **Get a curl command**:
-   - Open Chrome DevTools (F12) on any car listing page
-   - Right-click the request → Copy → Copy as cURL
-   - Paste it into the dashboard
+# Load sample data
+node ../scripts/load_placeholder_data.js
 
-2. **Add a source name** (optional):
-   - e.g., "Cars.com", "AutoTrader", "Local Dealership"
-
-3. **Click "Scrape & Add"**
-   - The tool fetches the page and extracts all car data
-   - Data is saved to SQLite database
-
-4. **View & Export**:
-   - Click any row to see full details
-   - Search by make, model, or VIN
-   - Export to CSV for your main platform
-
-## What Gets Extracted
-
-### Core Data
-- VIN (validated to 17 characters)
-- Year, Make, Model, Trim
-- Price
-- Mileage
-- Stock Number
-
-### Vehicle Specs
-- Body Type
-- Transmission
-- Drivetrain
-- Fuel Type
-- Engine (including cylinders, displacement, horsepower)
-- MPG (City/Highway)
-
-### Colors
-- Exterior Color
-- Interior Color
-
-### Features & Details
-- Feature list (parsed from features section)
-- Full description
-- Multiple images (extracts all image URLs)
-
-### Dealer Info
-- Dealer Name
-- Address
-- Phone
-- Email
-
-### Metadata
-- Source (name you provide)
-- Original URL
-- Scrape timestamp
-- Raw data (HTML/JSON for debugging)
-
-## Database Schema
-
-The tool uses SQLite (`cars.db`) with the following columns:
-- All extracted fields above
-- `features` (JSON array)
-- `images` (JSON array)
-- `raw_data` (JSON object)
-- `scraped_at` (timestamp)
-
-## Tips
-
-- **Single car pages (VDP)**: Extracts maximum detail
-- **Search results pages (SRP)**: Extracts multiple cars with basic info
-- **JSON-LD pages**: Uses structured data when available (most accurate)
-- **Headers are preserved**: The tool extracts `-H` flags from your curl command
-- **User-Agent is set automatically** if not provided
-
-## Example Curl Command
-
-```
-curl 'https://www.cars.com/vehicledetail/detail/12345/' \
-  -H 'User-Agent: Mozilla/5.0...' \
-  -H 'Cookie: session=xyz...'
+# Generate fake data
+node ../scripts/generate_fake_data.js
 ```
 
-## API Endpoints
+### Database
+```bash
+# Check database
+sqlite3 ../cars.db "SELECT COUNT(*) FROM vehicles;"
 
-- `GET /api/inventory` - Get all vehicles
-- `POST /api/scrape` - Scrape from curl command
-- `DELETE /api/inventory/:id` - Delete single vehicle
-- `DELETE /api/inventory` - Clear all vehicles
+# Reset database
+rm ../cars.db
+npm start
+```
 
-## Next Steps for Main Platform
+---
 
-This tool gives you:
-- ✅ Clean, structured car data
-- ✅ Valid VINs
-- ✅ Normalized pricing
-- ✅ Consistent database schema
-- ✅ CSV export for import
-
-Ready to plug into your AI car dealership platform!
+**Need help?** Check the [Main README](../README.md) or review the relevant documentation above.
