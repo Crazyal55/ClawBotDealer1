@@ -15,7 +15,6 @@
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "type-check": "tsc --noEmit",
-    "migrate: "node scripts/migrate.js",
     "db:migrate": "node scripts/migrate-postgres.js",
     "db:seed": "node scripts/seed.js",
     "queue:worker": "node src/queue/workers/index.ts",
