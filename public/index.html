@@ -6,7 +6,7 @@
     <title>AI Dealership Platform</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -14,128 +14,190 @@
             box-sizing: border-box;
         }
 
+        :root {
+            /* Grayscale Palette */
+            --bg-app: #0A0A0A;
+            --bg-elevated: #111111;
+            --bg-card: #161616;
+            --bg-input: #1A1A1A;
+            --bg-hover: #1F1F1F;
+            --bg-active: #1F2937;
+            
+            /* Text */
+            --text-primary: #FFFFFF;
+            --text-secondary: #A0A0A0;
+            --text-muted: #6B7280;
+            --text-disabled: #4B5563;
+            
+            /* Borders */
+            --border-subtle: #2A2A2A;
+            --border-default: #3F3F3F;
+            --border-focus: #4F46E5;
+            
+            /* Accents */
+            --accent-primary: #5B8C7A; /* Muted blue-green */
+            --accent-success: #10B981;
+            --accent-warning: #F59E0B;
+            --accent-error: #EF4444;
+            --accent-info: #6366F1;
+            
+            /* Shadows */
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+            
+            /* Spacing */
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
+            
+            /* Radius */
+            --radius-sm: 6px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+        }
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #1a1a2e;
-            color: #f8fafc;
+            background: var(--bg-app);
+            color: var(--text-primary);
             display: flex;
             height: 100vh;
             overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         /* Sidebar */
         .sidebar {
             width: 260px;
-            background: #16213e;
-            border-right: 1px solid #334155;
+            background: var(--bg-app);
+            border-right: 1px solid var(--border-subtle);
             display: flex;
             flex-direction: column;
-            transition: width 0.3s;
+            flex-shrink: 0;
         }
 
         .sidebar-header {
-            padding: 24px;
-            border-bottom: 1px solid #334155;
+            padding: var(--spacing-lg) var(--spacing-md);
+            border-bottom: 1px solid var(--border-subtle);
         }
 
         .logo {
-            font-size: 20px;
+            font-size: 14px;
             font-weight: 700;
-            color: #f8fafc;
+            color: var(--text-primary);
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: var(--spacing-sm);
+            letter-spacing: 0.5px;
         }
 
-        .logo-icon {
-            width: 32px;
-            height: 32px;
-            background: linear-gradient(135deg, #00d4ff 0%, #0891b2 100%);
-            border-radius: 8px;
+        .logo-dot {
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, var(--accent-primary) 0%, #3B82F6 100%);
+            border-radius: var(--radius-sm);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
         }
 
         .sidebar-nav {
             flex: 1;
-            padding: 16px;
+            padding: var(--spacing-md);
             overflow-y: auto;
         }
 
         .nav-section {
-            margin-bottom: 24px;
+            margin-bottom: var(--spacing-lg);
         }
 
-        .nav-section-title {
-            font-size: 11px;
+        .nav-label {
+            font-size: 10px;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #64748b;
-            padding: 8px 12px;
-            margin-bottom: 8px;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            padding: var(--spacing-sm) var(--spacing-md);
         }
 
         .nav-item {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 12px;
-            border-radius: 10px;
-            color: #94a3b8;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
             cursor: pointer;
-            transition: all 0.2s;
-            margin-bottom: 4px;
-            font-size: 14px;
+            transition: all 0.2s ease;
+            font-size: 13px;
             font-weight: 500;
+            border: 1px solid transparent;
         }
 
         .nav-item:hover {
-            background: #1e293b;
-            color: #f8fafc;
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            border-color: var(--border-subtle);
         }
 
         .nav-item.active {
-            background: rgba(0, 212, 255, 0.1);
-            color: #00d4ff;
+            background: var(--bg-active);
+            color: var(--text-primary);
+            border-color: var(--accent-primary);
+            font-weight: 600;
         }
 
         .nav-item.coming-soon {
-            opacity: 0.5;
+            opacity: 0.4;
             cursor: not-allowed;
         }
 
         .nav-item.coming-soon:hover {
             background: transparent;
-            color: #94a3b8;
+            color: var(--text-secondary);
+            border-color: transparent;
         }
 
-        .nav-badge {
-            background: #00d4ff;
-            color: #0f172a;
-            font-size: 10px;
-            font-weight: 700;
-            padding: 2px 6px;
-            border-radius: 4px;
+        .nav-indicator {
             margin-left: auto;
+            width: 8px;
+            height: 8px;
+            background: var(--text-muted);
+            border-radius: 50%;
+        }
+
+        .nav-indicator.active {
+            background: var(--accent-primary);
+            box-shadow: 0 0 8px rgba(91, 140, 122, 0.3);
         }
 
         .sidebar-footer {
-            padding: 16px;
-            border-top: 1px solid #334155;
+            padding: var(--spacing-md) var(--spacing-md);
+            border-top: 1px solid var(--border-subtle);
         }
 
         .env-selector {
             width: 100%;
-            padding: 10px 12px;
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 8px;
-            color: #f8fafc;
-            font-size: 13px;
+            padding: var(--spacing-md);
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 500;
             cursor: pointer;
+            appearance: none;
+            transition: all 0.2s;
+        }
+
+        .env-selector:hover {
+            border-color: var(--border-focus);
+            background: var(--bg-hover);
         }
 
         /* Main Content */
@@ -144,424 +206,361 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            background: var(--bg-app);
         }
 
         /* Top Bar */
         .top-bar {
-            padding: 16px 24px;
-            border-bottom: 1px solid #334155;
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-bottom: 1px solid var(--border-subtle);
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            background: #1a1a2e;
+            justify-content: space-between;
+            background: var(--bg-app);
         }
 
-        .search-box {
+        .top-bar-left {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            flex: 1;
+        }
+
+        .search-container {
             flex: 1;
             max-width: 400px;
-            position: relative;
         }
 
-        .search-box input {
+        .search-input {
             width: 100%;
-            padding: 10px 16px 10px 40px;
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 8px;
-            color: #f8fafc;
-            font-size: 14px;
-            transition: all 0.2s;
+            padding: var(--spacing-md) var(--spacing-md) var(--spacing-md) 36px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 400;
+            transition: all 0.2s ease;
         }
 
-        .search-box input:focus {
+        .search-input:focus {
             outline: none;
-            border-color: #00d4ff;
-            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(91, 140, 122, 0.2);
+            background: var(--bg-app);
         }
 
-        .search-box::before {
-            content: '🔍';
-            position: absolute;
-            left: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            opacity: 0.5;
-            font-size: 14px;
+        .search-input::placeholder {
+            color: var(--text-muted);
         }
 
-        .top-bar-actions {
+        .top-bar-right {
             display: flex;
-            gap: 12px;
             align-items: center;
+            gap: var(--spacing-md);
         }
 
-        .btn-import {
-            padding: 10px 20px;
-            background: #00d4ff;
-            color: #0f172a;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
+        .btn {
+            padding: var(--spacing-md) var(--spacing-lg);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            font-weight: 500;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
         }
 
-        .btn-import:hover {
-            background: #0891b2;
+        .btn-primary {
+            background: var(--text-primary);
+            color: var(--bg-app);
+            border-color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .btn-primary:hover {
+            background: var(--text-secondary);
+            border-color: var(--text-secondary);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-elevated);
+            border-color: var(--border-default);
             transform: translateY(-1px);
         }
 
-        .btn-new-source {
-            padding: 10px 20px;
-            background: #1e293b;
-            color: #f8fafc;
-            border: 1px solid #334155;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-new-source:hover {
-            background: #334155;
-            border-color: #475569;
+        .btn-secondary .badge {
+            background: var(--accent-primary);
+            color: var(--bg-app);
+            padding: 2px 6px;
+            border-radius: var(--radius-sm);
+            font-size: 10px;
+            font-weight: 600;
         }
 
         /* Content Area */
         .content-area {
             flex: 1;
             overflow-y: auto;
-            padding: 24px;
+            padding: var(--spacing-lg);
         }
 
-        /* Hero Stats */
-        .hero-stats {
+        /* Stats Grid */
+        .stats-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-bottom: 24px;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-xl);
         }
 
         .stat-card {
-            background: #1f293a;
-            border: 1px solid #334155;
-            border-radius: 16px;
-            padding: 20px;
-            transition: all 0.2s;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            transition: all 0.2s ease;
         }
 
         .stat-card:hover {
-            border-color: #475569;
+            border-color: var(--border-default);
+            box-shadow: var(--shadow-md);
             transform: translateY(-2px);
         }
 
-        .stat-label {
-            font-size: 12px;
-            font-weight: 600;
+        .stat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .stat-title {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            color: #64748b;
-            margin-bottom: 8px;
+        }
+
+        .stat-trend {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .stat-trend.up {
+            color: var(--accent-success);
+        }
+
+        .stat-trend.down {
+            color: var(--accent-error);
         }
 
         .stat-value {
             font-size: 32px;
             font-weight: 700;
-            color: #00d4ff;
+            color: var(--text-primary);
+            line-height: 1;
         }
 
-        .stat-trend {
+        .stat-label {
             font-size: 12px;
-            margin-top: 4px;
+            font-weight: 400;
+            color: var(--text-muted);
+            margin-top: var(--spacing-sm);
         }
 
-        .stat-trend.up {
-            color: #10b981;
+        .stat-bar {
+            height: 4px;
+            background: var(--bg-input);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: var(--spacing-md);
         }
 
-        .stat-trend.down {
-            color: #ef4444;
+        .stat-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            background: var(--accent-primary);
+            transition: width 0.5s ease;
         }
 
-        /* Tab Content */
-        .tab-panel {
-            display: none;
-        }
-
-        .tab-panel.active {
-            display: block;
-            animation: fadeIn 0.3s;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Panel */
-        .panel {
-            background: #1f293a;
-            border: 1px solid #334155;
-            border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 20px;
+        /* Content Panel */
+        .content-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
         }
 
         .panel-header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid #334155;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-lg);
+            padding-bottom: var(--spacing-md);
+            border-bottom: 1px solid var(--border-subtle);
         }
 
         .panel-title {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 600;
-            color: #f8fafc;
+            color: var(--text-primary);
         }
 
         .panel-actions {
             display: flex;
-            gap: 8px;
+            gap: var(--spacing-sm);
         }
 
-        /* Forms */
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        .form-label {
-            display: block;
+        .panel-subtitle {
             font-size: 13px;
             font-weight: 500;
-            color: #94a3b8;
-            margin-bottom: 8px;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-md);
         }
 
-        .form-input,
-        .form-textarea,
-        .form-select {
-            width: 100%;
-            padding: 12px 16px;
-            background: #0f172a;
-            border: 1px solid #334155;
-            border-radius: 10px;
-            color: #f8fafc;
-            font-size: 14px;
-            font-family: inherit;
-            transition: all 0.2s;
+        /* Option Tabs */
+        .option-tabs {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
         }
 
-        .form-input:focus,
-        .form-textarea:focus,
-        .form-select:focus {
-            outline: none;
-            border-color: #00d4ff;
-            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
-        }
-
-        .form-textarea {
-            resize: vertical;
-            min-height: 120px;
-            font-family: 'JetBrains Mono', 'Courier New', monospace;
-            font-size: 13px;
-        }
-
-        /* Buttons */
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 600;
+        .option-tab {
+            padding: var(--spacing-md) var(--spacing-lg);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
             cursor: pointer;
-            transition: all 0.2s;
-            display: inline-flex;
+            transition: all 0.2s ease;
+            display: flex;
             align-items: center;
-            gap: 8px;
+            gap: var(--spacing-md);
         }
 
-        .btn-primary {
-            background: #00d4ff;
-            color: #0f172a;
+        .option-tab:hover {
+            background: var(--bg-hover);
+            border-color: var(--border-default);
         }
 
-        .btn-primary:hover {
-            background: #0891b2;
-            transform: translateY(-1px);
+        .option-tab.selected {
+            background: var(--bg-active);
+            border-color: var(--accent-primary);
         }
 
-        .btn-secondary {
-            background: #1e293b;
-            color: #f8fafc;
-            border: 1px solid #334155;
+        .option-tab-icon {
+            font-size: 24px;
+            opacity: 0.7;
         }
 
-        .btn-secondary:hover {
-            background: #334155;
-            border-color: #475569;
+        .option-tab.selected .option-tab-icon {
+            opacity: 1;
+            color: var(--accent-primary);
         }
 
-        .btn-danger {
-            background: rgba(239, 68, 68, 0.1);
-            color: #ef4444;
-            border: 1px solid #ef4444;
+        .option-tab-content {
+            flex: 1;
         }
 
-        .btn-danger:hover {
-            background: rgba(239, 68, 68, 0.2);
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        /* Table */
-        .table-container {
-            border: 1px solid #334155;
-            border-radius: 12px;
-            overflow: hidden;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th {
-            background: #0f172a;
-            padding: 14px 16px;
-            text-align: left;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #64748b;
-            border-bottom: 1px solid #334155;
-        }
-
-        td {
-            padding: 14px 16px;
-            border-bottom: 1px solid #1e293b;
+        .option-tab-title {
             font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 2px;
         }
 
-        tr:last-child td {
-            border-bottom: none;
+        .option-tab-desc {
+            font-size: 12px;
+            font-weight: 400;
+            color: var(--text-muted);
         }
 
-        tr:hover {
-            background: #1e293b;
+        .option-tab-indicator {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid var(--border-subtle);
+            margin-left: auto;
         }
 
-        /* Status Badges */
-        .badge {
+        .option-tab.selected .option-tab-indicator {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: var(--spacing-xl) var(--spacing-lg);
+            border: 1px dashed var(--border-subtle);
+            border-radius: var(--radius-lg);
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: var(--spacing-md);
+            opacity: 0.3;
+        }
+
+        .empty-text {
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* Status Badge */
+        .status-badge {
             display: inline-flex;
             align-items: center;
-            padding: 4px 10px;
-            border-radius: 12px;
+            padding: 4px 12px;
+            background: var(--bg-input);
+            border-radius: var(--radius-sm);
             font-size: 11px;
             font-weight: 600;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .badge-success {
-            background: rgba(16, 185, 129, 0.1);
-            color: #10b981;
+        .status-badge.active {
+            background: var(--accent-success);
+            color: var(--bg-app);
         }
 
-        .badge-warning {
-            background: rgba(245, 158, 11, 0.1);
-            color: #f59e0b;
-        }
-
-        .badge-error {
-            background: rgba(239, 68, 68, 0.1);
-            color: #ef4444;
-        }
-
-        .badge-info {
-            background: rgba(0, 212, 255, 0.1);
-            color: #00d4ff;
-        }
-
-        /* Quality Score */
-        .quality-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .quality-bar {
-            width: 60px;
-            height: 6px;
-            background: #334155;
-            border-radius: 3px;
-            overflow: hidden;
-        }
-
-        .quality-fill {
-            height: 100%;
-            border-radius: 3px;
-            transition: width 0.3s;
-        }
-
-        .quality-fill.high { background: #10b981; }
-        .quality-fill.medium { background: #f59e0b; }
-        .quality-fill.low { background: #ef4444; }
-
-        /* Coming Soon Panel */
-        .coming-soon-panel {
-            text-align: center;
-            padding: 80px 40px;
-        }
-
-        .coming-soon-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-            opacity: 0.5;
-        }
-
-        .coming-soon-title {
-            font-size: 20px;
-            font-weight: 600;
-            color: #f8fafc;
-            margin-bottom: 8px;
-        }
-
-        .coming-soon-text {
-            color: #94a3b8;
-            font-size: 14px;
+        .status-badge.experimental {
+            background: var(--accent-warning);
+            color: var(--bg-app);
         }
 
         /* Responsive */
-        @media (max-width: 1024px) {
-            .sidebar {
-                width: 200px;
-            }
-
-            .hero-stats {
+        @media (max-width: 1200px) {
+            .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
         }
 
         @media (max-width: 768px) {
             .sidebar {
-                position: fixed;
-                left: -260px;
-                z-index: 1000;
+                display: none;
             }
 
-            .sidebar.open {
-                left: 0;
+            .stats-grid {
+                grid-template-columns: 1fr;
             }
 
-            .hero-stats {
+            .option-tabs {
                 grid-template-columns: 1fr;
             }
         }
@@ -572,65 +571,76 @@
     <aside class="sidebar">
         <div class="sidebar-header">
             <div class="logo">
-                <div class="logo-icon">🚗</div>
+                <div class="logo-dot"></div>
                 AI Dealership Platform
             </div>
         </div>
 
         <nav class="sidebar-nav">
             <div class="nav-section">
-                <div class="nav-section-title">Core Features</div>
-                <div class="nav-item active" onclick="switchTab('scraper')">
-                    <span>🔧</span> Scraper
+                <div class="nav-label">Core</div>
+                <div class="nav-item active" onclick="selectTab('dashboard')">
+                    <span>📊</span>
+                    Dashboard
+                    <span class="nav-indicator active"></span>
                 </div>
-                <div class="nav-item" onclick="switchTab('inventory')">
-                    <span>📦</span> Inventory
+                <div class="nav-item" onclick="selectTab('inventory')">
+                    <span>🚗</span>
+                    Inventory
                 </div>
-                <div class="nav-item" onclick="switchTab('database')">
-                    <span>🗄️</span> Database
+                <div class="nav-item" onclick="selectTab('quality')">
+                    <span>✓</span>
+                    Quality
                 </div>
-                <div class="nav-item" onclick="switchTab('quality')">
-                    <span>✓</span> Quality
-                </div>
-            </div>
-
-            <div class="nav-section">
-                <div class="nav-section-title">AI Features</div>
-                <div class="nav-item coming-soon">
-                    <span>⚡</span> Embeddings
-                    <span class="nav-badge">⚡</span>
-                </div>
-                <div class="nav-item coming-soon">
-                    <span>🎯</span> Vector DB
-                    <span class="nav-badge">⚡</span>
-                </div>
-                <div class="nav-item coming-soon">
-                    <span>📊</span> Semantic Viz
-                    <span class="nav-badge">⚡</span>
+                <div class="nav-item" onclick="selectTab('database')">
+                    <span>🗄️</span>
+                    Database
                 </div>
             </div>
 
             <div class="nav-section">
-                <div class="nav-section-title">Platform</div>
+                <div class="nav-label">AI Features</div>
                 <div class="nav-item coming-soon">
-                    <span>👥</span> Customers
-                    <span class="nav-badge">⚡</span>
+                    <span>⚡</span>
+                    Embeddings
+                    <span class="nav-indicator"></span>
                 </div>
                 <div class="nav-item coming-soon">
-                    <span>📈</span> Analytics
-                    <span class="nav-badge">⚡</span>
+                    <span>🎯</span>
+                    Vector DB
+                    <span class="nav-indicator"></span>
                 </div>
-                <div class="nav-item" onclick="switchTab('settings')">
-                    <span>⚙️</span> Settings
+                <div class="nav-item coming-soon">
+                    <span>📈</span>
+                    Semantic Viz
+                    <span class="nav-indicator"></span>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-label">Platform</div>
+                <div class="nav-item coming-soon">
+                    <span>👥</span>
+                    Customers
+                    <span class="nav-indicator"></span>
+                </div>
+                <div class="nav-item coming-soon">
+                    <span>📈</span>
+                    Analytics
+                    <span class="nav-indicator"></span>
+                </div>
+                <div class="nav-item" onclick="selectTab('settings')">
+                    <span>⚙️</span>
+                    Settings
                 </div>
             </div>
         </nav>
 
         <div class="sidebar-footer">
             <select class="env-selector">
-                <option>🔹 Development</option>
-                <option>🟡 Staging</option>
-                <option>🟢 Production</option>
+                <option>Development</option>
+                <option>Staging</option>
+                <option>Production</option>
             </select>
         </div>
     </aside>
@@ -639,268 +649,265 @@
     <main class="main-content">
         <!-- Top Bar -->
         <header class="top-bar">
-            <div class="search-box">
-                <input type="text" placeholder="Search across platform...">
+            <div class="top-bar-left">
+                <div class="search-container">
+                    <input type="text" class="search-input" placeholder="Search vehicles, make, model, VIN...">
+                </div>
             </div>
-            <div class="top-bar-actions">
-                <button class="btn-import" onclick="importMockData()">
-                    📥 Import Mock Data
+            <div class="top-bar-right">
+                <button class="btn btn-secondary">
+                    Import Data
+                    <span class="badge">New</span>
                 </button>
-                <button class="btn-new-source">
-                    + New Source
+                <button class="btn btn-primary">
+                    New Source
                 </button>
             </div>
         </header>
 
         <!-- Content Area -->
         <div class="content-area">
-            <!-- Hero Stats -->
-            <div class="hero-stats">
+            <!-- Stats Grid -->
+            <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-label">Quality Score</div>
+                    <div class="stat-header">
+                        <span class="stat-title">Quality Score</span>
+                        <span class="stat-trend up">↑ 3.2%</span>
+                    </div>
                     <div class="stat-value">87%</div>
-                    <div class="stat-trend up">↑ 3% from last week</div>
+                    <div class="stat-label">Average across 59 vehicles</div>
+                    <div class="stat-bar">
+                        <div class="stat-bar-fill" style="width: 87%"></div>
+                    </div>
                 </div>
+
                 <div class="stat-card">
-                    <div class="stat-label">Vehicles</div>
+                    <div class="stat-header">
+                        <span class="stat-title">Vehicles</span>
+                        <span class="stat-trend up">↑ 12</span>
+                    </div>
                     <div class="stat-value">59</div>
-                    <div class="stat-trend up">↑ 12 new today</div>
+                    <div class="stat-label">Total inventory</div>
+                    <div class="stat-bar">
+                        <div class="stat-bar-fill" style="width: 59%"></div>
+                    </div>
                 </div>
+
                 <div class="stat-card">
-                    <div class="stat-label">High Quality</div>
+                    <div class="stat-header">
+                        <span class="stat-title">High Quality</span>
+                        <span class="stat-trend up">↑ 5</span>
+                    </div>
                     <div class="stat-value">42</div>
-                    <div class="stat-trend up">↑ 5 improved</div>
+                    <div class="stat-label">Quality score ≥ 80%</div>
+                    <div class="stat-bar">
+                        <div class="stat-bar-fill" style="width: 71%"></div>
+                    </div>
                 </div>
+
                 <div class="stat-card">
-                    <div class="stat-label">Issues</div>
+                    <div class="stat-header">
+                        <span class="stat-title">Issues</span>
+                        <span class="stat-trend down">↓ 2</span>
+                    </div>
                     <div class="stat-value">7</div>
-                    <div class="stat-trend down">↓ 2 resolved</div>
+                    <div class="stat-label">Flagged for review</div>
+                    <div class="stat-bar">
+                        <div class="stat-bar-fill" style="width: 12%; background: var(--accent-error);"></div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Scraper Tab -->
-            <div id="scraper-tab" class="tab-panel active">
-                <div class="panel">
+            <!-- Options Tabs -->
+            <div class="option-tabs">
+                <div class="option-tab selected" onclick="selectOption('a')">
+                    <div class="option-tab-icon">📊</div>
+                    <div class="option-tab-content">
+                        <div class="option-tab-title">Option A</div>
+                        <div class="option-tab-desc">Dashboard & Analytics</div>
+                    </div>
+                    <div class="option-tab-indicator"></div>
+                </div>
+
+                <div class="option-tab" onclick="selectOption('b')">
+                    <div class="option-tab-icon">🚗</div>
+                    <div class="option-tab-content">
+                        <div class="option-tab-title">Option B</div>
+                        <div class="option-tab-desc">Inventory Management</div>
+                    </div>
+                    <div class="option-tab-indicator"></div>
+                </div>
+
+                <div class="option-tab" onclick="selectOption('c')">
+                    <div class="option-tab-icon">📥</div>
+                    <div class="option-tab-content">
+                        <div class="option-tab-title">Option C</div>
+                        <div class="option-tab-desc">Scraping & Sources</div>
+                    </div>
+                    <div class="option-tab-indicator"></div>
+                </div>
+
+                <div class="option-tab" onclick="selectOption('d')">
+                    <div class="option-tab-icon">🎨</div>
+                    <div class="option-tab-content">
+                        <div class="option-tab-title">Option D</div>
+                        <div class="option-tab-desc">Database & Quality</div>
+                    </div>
+                    <div class="option-tab-indicator"></div>
+                </div>
+            </div>
+
+            <!-- Content Panel -->
+            <div class="content-panel" id="content-panel">
+                <!-- Dashboard Content -->
+                <div id="option-a-content">
                     <div class="panel-header">
-                        <h2 class="panel-title">Scrape Vehicles</h2>
-                        <div class="panel-actions">
-                            <button class="btn btn-secondary">📜 Scraping History</button>
+                        <h2 class="panel-title">Dashboard & Analytics</h2>
+                        <span class="status-badge active">Live</span>
+                    </div>
+
+                    <p class="panel-subtitle">Platform Overview</p>
+                    <div style="color: var(--text-muted); margin-bottom: var(--spacing-lg);">
+                        Welcome to your AI-powered dealership platform. Get insights into inventory quality, scraping performance, and data trends.
+                    </div>
+
+                    <h3 style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin: var(--spacing-lg) 0 0 0 var(--spacing-md);">
+                        Performance Metrics
+                    </h3>
+
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--spacing-md); margin-bottom: var(--spacing-lg);">
+                        <div style="background: var(--bg-elevated); padding: var(--spacing-lg); border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                            <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 500; margin-bottom: var(--spacing-sm);">
+                                Scrapes Today
+                            </div>
+                            <div style="font-size: 24px; font-weight: 700; color: var(--text-primary);">12</div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: var(--spacing-xs);">
+                                Vehicles scraped today
+                            </div>
+                        </div>
+                        <div style="background: var(--bg-elevated); padding: var(--spacing-lg); border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                            <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 500; margin-bottom: var(--spacing-sm);">
+                                Success Rate
+                            </div>
+                            <div style="font-size: 24px; font-weight: 700; color: var(--accent-success);">94%</div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: var(--spacing-xs);">
+                                Scrapes completed successfully
+                            </div>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Source Name</label>
-                        <input type="text" class="form-input" placeholder="e.g., Cars.com, AutoTrader...">
+                    <div class="empty-state" style="margin-top: var(--spacing-lg);">
+                        <div class="empty-icon">📊</div>
+                        <div class="empty-text">
+                            Detailed analytics coming in Phase 2
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: var(--spacing-sm);">
+                            Including: Vehicle trends, Make/Model distribution, Scraping performance, Quality reports
+                        </div>
                     </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Paste Curl Command</label>
-                        <textarea class="form-textarea" placeholder="Paste your curl command here...
-
-Example:
-curl 'https://www.cars.com/vehicledetail/detail/12345' \
-  -H 'User-Agent: Mozilla/5.0...' \
-  -H 'Cookie: session=...'"></textarea>
-                    </div>
-
-                    <button class="btn btn-primary" onclick="alert('Scraping not yet implemented')">
-                        🚀 Scrape & Add to Database
-                    </button>
                 </div>
-            </div>
 
-            <!-- Inventory Tab -->
-            <div id="inventory-tab" class="tab-panel">
-                <div class="panel">
+                <!-- Inventory Content -->
+                <div id="option-b-content" style="display: none;">
                     <div class="panel-header">
                         <h2 class="panel-title">Vehicle Inventory</h2>
                         <div class="panel-actions">
-                            <button class="btn btn-secondary">📤 Export CSV</button>
-                            <button class="btn btn-secondary">📊 Analytics</button>
+                            <button class="btn btn-secondary">Export CSV</button>
+                            <button class="btn btn-secondary">Filter</button>
                         </div>
                     </div>
 
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Quality</th>
-                                    <th>Year</th>
-                                    <th>Make</th>
-                                    <th>Model</th>
-                                    <th>Price</th>
-                                    <th>Mileage</th>
-                                    <th>Source</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>
-                                        <div class="quality-badge">
-                                            <div class="quality-bar">
-                                                <div class="quality-fill high" style="width: 92%"></div>
-                                            </div>
-                                            <span>92%</span>
-                                        </div>
-                                    </td>
-                                    <td>2023</td>
-                                    <td>Toyota</td>
-                                    <td>Camry SE</td>
-                                    <td>$28,450</td>
-                                    <td>15,234 mi</td>
-                                    <td>Cars.com</td>
-                                    <td><span class="badge badge-success">Active</span></td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <div class="quality-badge">
-                                            <div class="quality-bar">
-                                                <div class="quality-fill medium" style="width: 67%"></div>
-                                            </div>
-                                            <span>67%</span>
-                                        </div>
-                                    </td>
-                                    <td>2022</td>
-                                    <td>Honda</td>
-                                    <td>CR-V EX</td>
-                                    <td>$31,200</td>
-                                    <td>28,567 mi</td>
-                                    <td>AutoTrader</td>
-                                    <td><span class="badge badge-success">Active</span></td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <div class="quality-badge">
-                                            <div class="quality-bar">
-                                                <div class="quality-fill low" style="width: 45%"></div>
-                                            </div>
-                                            <span>45%</span>
-                                        </div>
-                                    </td>
-                                    <td>2021</td>
-                                    <td>Ford</td>
-                                    <td>Escape S</td>
-                                    <td>$22,800</td>
-                                    <td>45,123 mi</td>
-                                    <td>Cars.com</td>
-                                    <td><span class="badge badge-warning">Review</span></td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <p class="panel-subtitle">Manage your vehicle inventory with filtering and bulk actions.</p>
+
+                    <div class="empty-state" style="margin-top: var(--spacing-lg);">
+                        <div class="empty-icon">🚗</div>
+                        <div class="empty-text">Inventory management interface</div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: var(--spacing-sm);">
+                            Full CRUD operations, advanced filtering, bulk export, and vehicle details view coming in Phase 2.
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Database Tab -->
-            <div id="database-tab" class="tab-panel">
-                <div class="panel">
+                <!-- Scraping Content -->
+                <div id="option-c-content" style="display: none;">
                     <div class="panel-header">
-                        <h2 class="panel-title">Database Manager</h2>
+                        <h2 class="panel-title">Scraping & Sources</h2>
                         <div class="panel-actions">
-                            <button class="btn btn-secondary">📤 Export Data</button>
-                            <button class="btn btn-danger">🗑️ Clear Database</button>
+                            <button class="btn btn-primary">New Source</button>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">SQL Query</label>
-                        <textarea class="form-textarea" placeholder="SELECT * FROM vehicles WHERE quality_score > 80..."></textarea>
+                    <p class="panel-subtitle">Configure automated scraping from dealership websites.</p>
+
+                    <div class="empty-state" style="margin-top: var(--spacing-lg);">
+                        <div class="empty-icon">📥</div>
+                        <div class="empty-text">Scraping configuration interface</div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: var(--spacing-sm);">
+                            Add new sources, configure scraping schedules, view scrape history, and manage batch processing. Coming in Phase 2.
+                        </div>
                     </div>
-
-                    <button class="btn btn-primary">▶ Run Query</button>
                 </div>
-            </div>
 
-            <!-- Quality Tab -->
-            <div id="quality-tab" class="tab-panel">
-                <div class="panel">
+                <!-- Database Content -->
+                <div id="option-d-content" style="display: none;">
                     <div class="panel-header">
-                        <h2 class="panel-title">Quality Analysis</h2>
+                        <h2 class="panel-title">Database & Quality</h2>
                         <div class="panel-actions">
-                            <button class="btn btn-secondary">📊 Quality Report</button>
-                            <button class="btn btn-secondary">🔄 Recalculate</button>
+                            <button class="btn btn-secondary">Export Data</button>
+                            <button class="btn btn-secondary">Quality Report</button>
                         </div>
                     </div>
 
-                    <div class="hero-stats" style="margin-bottom: 20px;">
-                        <div class="stat-card">
-                            <div class="stat-label">High Quality</div>
-                            <div class="stat-value">42</div>
-                            <div class="stat-trend">80%+</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-label">Medium Quality</div>
-                            <div class="stat-value">10</div>
-                            <div class="stat-trend">50-79%</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-label">Low Quality</div>
-                            <div class="stat-value">7</div>
-                            <div class="stat-trend">&lt;50%</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-label">Avg Score</div>
-                            <div class="stat-value">87%</div>
-                            <div class="stat-trend up">↑ 3%</div>
+                    <p class="panel-subtitle">View database schema, run queries, and access quality analysis tools.</p>
+
+                    <div class="empty-state" style="margin-top: var(--spacing-lg);">
+                        <div class="empty-icon">🎨</div>
+                        <div class="empty-text">Database management interface</div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: var(--spacing-sm);">
+                            Schema viewer, SQL query editor, data export, and quality recalculation tools coming in Phase 2.
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Settings Tab -->
-            <div id="settings-tab" class="tab-panel">
-                <div class="panel">
-                    <div class="panel-header">
-                        <h2 class="panel-title">Platform Settings</h2>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">API Keys</label>
-                        <input type="text" class="form-input" placeholder="OpenAI API Key...">
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Database Connection</label>
-                        <select class="form-select">
-                            <option>SQLite (Development)</option>
-                            <option>PostgreSQL (Production)</option>
-                        </select>
-                    </div>
-
-                    <button class="btn btn-primary">💾 Save Settings</button>
                 </div>
             </div>
         </div>
     </main>
 
     <script>
-        function switchTab(tabName) {
-            // Update sidebar
+        function selectTab(tabName) {
+            // Update sidebar active state
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.classList.remove('active');
-                if (item.textContent.toLowerCase().includes(tabName.toLowerCase())) {
-                    item.classList.add('active');
-                }
+                const indicator = item.querySelector('.nav-indicator');
+                if (indicator) indicator.classList.remove('active');
             });
 
-            // Update content
-            document.querySelectorAll('.tab-panel').forEach(panel => {
-                panel.classList.remove('active');
-            });
-
-            const tabElement = document.getElementById(tabName + '-tab');
-            if (tabElement) {
-                tabElement.classList.add('active');
-            }
+            // Activate clicked tab
+            event.currentTarget.classList.add('active');
+            const indicator = event.currentTarget.querySelector('.nav-indicator');
+            if (indicator) indicator.classList.add('active');
         }
 
-        function importMockData() {
-            const sizes = ['Small (10 vehicles)', 'Medium (100 vehicles)', 'Large (500 vehicles)'];
-            const selection = prompt('Select mock data size:\n\n1. Small (10 vehicles)\n2. Medium (100 vehicles)\n3. Large (500 vehicles)\n\nEnter 1, 2, or 3:');
-            
-            if (selection) {
-                alert(`Importing ${sizes[parseInt(selection) - 1]}...\n\nThis feature will be implemented with backend integration.`);
+        function selectOption(option) {
+            // Update option tabs
+            document.querySelectorAll('.option-tab').forEach(tab => {
+                tab.classList.remove('selected');
+            });
+
+            event.currentTarget.classList.add('selected');
+
+            // Hide all content panels
+            document.querySelectorAll('[id$="-content"]').forEach(content => {
+                content.style.display = 'none';
+            });
+
+            // Show selected content
+            const contentPanel = document.getElementById(option + '-content');
+            if (contentPanel) {
+                contentPanel.style.display = 'block';
+                contentPanel.style.opacity = '0';
+                setTimeout(() => {
+                    contentPanel.style.opacity = '1';
+                }, 50);
             }
         }
     </script>
