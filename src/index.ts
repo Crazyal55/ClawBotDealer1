@@ -3,21 +3,9 @@ import cors from 'cors';
 import compression from 'compression';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import { Pool } from 'pg';
 
-import inventoryRoutes from './routes/inventory.routes';
-
-// Create PostgreSQL pool
-const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432'),
-  database: process.env.DB_NAME || 'dealership_platform',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'postgres',
-  max: 20, // Maximum pool size
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-});
+import inventoryRoutes from './api/routes/inventory.routes';
+import { pool } from './config/db';
 
 const app = express();
 
@@ -89,7 +77,7 @@ app.get('/health', (req: Request, res: Response) => {
 app.use('/api/inventory', inventoryRoutes);
 
 // Error handling middleware
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+app.use((err: Error & { code?: string }, req: Request, res: Response, next: NextFunction) => {
   console.error('[API Error]', err);
 
   // Validation errors
@@ -143,7 +131,7 @@ app.use((req: Request, res: Response) => {
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`🚀 AI Dealership Platform API`);
+  console.log(`🚀 Dealer Dev Ops API`);
   console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔌 Port: ${PORT}`);
   console.log(`🗄️  Database: ${process.env.DB_NAME || 'dealership_platform'}`);
@@ -151,4 +139,4 @@ app.listen(PORT, () => {
 });
 
 export default app;
-export { pool }; // Export pool for repositories
+export { pool };

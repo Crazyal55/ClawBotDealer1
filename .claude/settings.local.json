@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run test:smoke:*)",
+      "Bash(curl:*)",
+      "Bash(npm run type-check:*)",
+      "Bash(sqlite3:*)",
+      "Bash(node:*)",
+      "Bash(netstat:*)",
+      "Bash(npm run ci:*)"
+    ]
+  }
+}

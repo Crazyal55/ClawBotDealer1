@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const Database = require('./db');
 const scraper = require('./scraper');
+const CarInventoryCrawler = require('./crawler');
 
 const app = express();
 const PORT = 3000;
@@ -12,6 +13,14 @@ app.use(express.static('public'));
 
 const db = new Database();
 
+// Crawl job management
+const crawlJobs = new Map();
+
+// Helper to generate job ID
+function generateJobId() {
+  return 'job_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
 // Initialize database
 db.init().then(() => {
   console.log('Database initialized');
@@ -20,6 +29,13 @@ db.init().then(() => {
 });
 
 // Routes
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString()
+  });
+});
+
 app.get('/api/inventory', async (req, res) => {
   try {
     const inventory = await db.getAllInventory();
@@ -269,6 +285,144 @@ app.delete('/api/inventory/duplicates', async (req, res) => {
   }
 });
 
+// ============================================================================
+// CRAWLER ENDPOINTS
+// ============================================================================
+
+// Start a new crawl job
+app.post('/api/crawl', async (req, res) => {
+  const { url, sourceName, options = {} } = req.body;
+
+  // Validate URL
+  if (!url) {
+    return res.status(400).json({
+      success: false,
+      error: 'URL is required'
+    });
+  }
+
+  try {
+    // Create job
+    const jobId = generateJobId();
+    const job = {
+      id: jobId,
+      url,
+      sourceName: sourceName || 'crawler',
+      status: 'running',
+      startedAt: new Date().toISOString(),
+      completedAt: null,
+      vehicles: [],
+      stats: null,
+      options
+    };
+
+    crawlJobs.set(jobId, job);
+
+    // Start crawling asynchronously
+    const crawler = new CarInventoryCrawler({
+      maxPages: options.maxPages || 50,
+      maxVehicles: options.maxVehicles || 500,
+      concurrency: options.concurrency || 3,
+      rateLimit: options.rateLimit || 1500,
+      maxRetries: 3,
+      onProgress: (progress) => {
+        job.progress = progress;
+      }
+    });
+
+    // Run crawl in background
+    crawler.crawl(url, sourceName || 'crawler').then(result => {
+      job.status = 'completed';
+      job.completedAt = new Date().toISOString();
+      job.vehicles = result.vehicles;
+      job.stats = result.stats;
+
+      // Save to database
+      db.saveInventory({ source: sourceName || 'crawler', cars: result.vehicles })
+        .then(saved => {
+          console.log(`[Crawler] Saved ${saved.length} vehicles to database`);
+        })
+        .catch(err => {
+          console.error('[Crawler] Error saving to database:', err);
+        });
+    }).catch(error => {
+      job.status = 'failed';
+      job.completedAt = new Date().toISOString();
+      job.error = error.message;
+      console.error('[Crawler] Job failed:', error);
+    });
+
+    res.json({
+      success: true,
+      jobId,
+      status: 'started',
+      message: 'Crawling job started',
+      url
+    });
+
+  } catch (error) {
+    console.error('Crawl start error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Get crawl job status
+app.get('/api/crawl/:jobId/status', (req, res) => {
+  const job = crawlJobs.get(req.params.jobId);
+
+  if (!job) {
+    return res.status(404).json({
+      success: false,
+      error: 'Job not found'
+    });
+  }
+
+  res.json({
+    jobId: job.id,
+    status: job.status,
+    progress: job.progress || {
+      queued: 0,
+      running: 0,
+      completed: 0,
+      failed: 0
+    },
+    startedAt: job.startedAt,
+    completedAt: job.completedAt,
+    url: job.url
+  });
+});
+
+// Get crawl job results
+app.get('/api/crawl/:jobId/results', (req, res) => {
+  const job = crawlJobs.get(req.params.jobId);
+
+  if (!job) {
+    return res.status(404).json({
+      success: false,
+      error: 'Job not found'
+    });
+  }
+
+  if (job.status !== 'completed') {
+    return res.status(400).json({
+      success: false,
+      error: 'Job not complete yet',
+      status: job.status
+    });
+  }
+
+  res.json({
+    success: true,
+    jobId: job.id,
+    vehicles: job.vehicles,
+    stats: job.stats,
+    completedAt: job.completedAt
+  });
+});
+
 app.listen(PORT, () => {
-  console.log(`🚗 Car Scraper Dashboard running at http://localhost:${PORT}`);
+  console.log(`🚗 Dealer Dev Ops running at http://localhost:${PORT}`);
 });

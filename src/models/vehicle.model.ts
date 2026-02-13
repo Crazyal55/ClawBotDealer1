@@ -6,7 +6,7 @@ export interface Vehicle {
   model: string;
   trim?: string;
   price: number;
-  mileage: number;
+  mileage: number | null;
   stockNumber?: string;
   bodyType?: string;
   transmission?: string;

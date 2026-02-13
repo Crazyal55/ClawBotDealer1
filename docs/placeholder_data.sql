@@ -79,18 +79,18 @@ CREATE TABLE vehicles (
     
     -- Timestamps
     scraped_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    -- Indexes for fast filtering
-    INDEX idx_price (price),
-    INDEX idx_year (year),
-    INDEX idx_make_model (make, model),
-    INDEX idx_dealer (dealer_id),
-    INDEX idx_location (location_id),
-    INDEX idx_availability (availability),
-    INDEX idx_quality (quality_score),
-    INDEX idx_stock (stock_number)
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Indexes for fast filtering
+CREATE INDEX idx_price ON vehicles(price);
+CREATE INDEX idx_year ON vehicles(year);
+CREATE INDEX idx_make_model ON vehicles(make, model);
+CREATE INDEX idx_dealer ON vehicles(dealer_id);
+CREATE INDEX idx_location ON vehicles(location_id);
+CREATE INDEX idx_availability ON vehicles(availability);
+CREATE INDEX idx_quality ON vehicles(quality_score);
+CREATE INDEX idx_stock ON vehicles(stock_number);
 
 -- Insert Fake Dealership
 INSERT INTO dealers (name, website_url, business_id) VALUES

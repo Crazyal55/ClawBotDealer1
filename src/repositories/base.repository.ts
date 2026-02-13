@@ -1,5 +1,4 @@
-import { Pool, PoolClient, QueryResult } from 'pg';
-import { Vehicle } from '../models/vehicle.model';
+import { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg';
 
 export class BaseRepository {
   protected pool: Pool;
@@ -8,7 +7,7 @@ export class BaseRepository {
     this.pool = pool;
   }
 
-  protected async query<T>(text: string, params?: any[]): Promise<QueryResult<T>> {
+  protected async query<T extends QueryResultRow>(text: string, params?: any[]): Promise<QueryResult<T>> {
     const start = Date.now();
     try {
       const result = await this.pool.query(text, params);
@@ -41,8 +40,8 @@ export class BaseRepository {
     }
   }
 
-  protected mapEntity<T>(row: any): T {
-    if (!row) return null as unknown as T;
-    return row as T;
+  protected mapEntity(row: any): any {
+    if (!row) return null;
+    return row;
   }
 }

@@ -1,5 +1,7 @@
 // Async handler wrapper to catch errors consistently
-export const asyncHandler = (fn: Function) => {
+export const asyncHandler = (
+  fn: (req: any, res: any, next: any) => Promise<any>
+) => {
   return async (req: any, res: any, next: any) => {
     try {
       return await fn(req, res, next);
@@ -41,8 +43,8 @@ export const isValidEmail = (email: string): boolean => {
 };
 
 export const isValidVIN = (vin: string): boolean => {
-  // VIN format: 17 alphanumeric characters
-  const vinRegex = /^[A-H0-9]{17}$/;
+  // VIN format: 17 characters excluding I, O, Q
+  const vinRegex = /^(?!.*[IOQ])[A-HJ-NPR-Z0-9]{17}$/;
   return vinRegex.test(vin);
 };
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Dealership Platform</title>
+    <title>Dealer Dev Ops</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -431,6 +431,126 @@
             margin-bottom: var(--spacing-md);
         }
 
+        .table-toolbar {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
+            flex-wrap: wrap;
+        }
+
+        .field-picker {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .field-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border: 1px solid var(--border-subtle);
+            border-radius: 999px;
+            background: var(--bg-elevated);
+            color: var(--text-secondary);
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .field-pill input {
+            accent-color: var(--accent-primary);
+        }
+
+        .table-wrap {
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            background: var(--bg-elevated);
+        }
+
+        .db-table-wrap {
+            max-height: 420px;
+            overflow: auto;
+        }
+
+        #db-vehicles-table {
+            min-width: 1700px;
+        }
+
+        #db-vehicles-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        .split-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-md);
+        }
+
+        .info-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+        }
+
+        .info-title {
+            color: var(--text-muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .info-value {
+            color: var(--text-primary);
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            text-align: left;
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border-subtle);
+            font-size: 12px;
+        }
+
+        .data-table th {
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            font-weight: 600;
+            background: var(--bg-input);
+        }
+
+        .data-table td {
+            color: var(--text-secondary);
+        }
+
+        .data-table tr:hover td {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .preview-frame {
+            width: 100%;
+            height: 360px;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            background: var(--bg-input);
+        }
+
         /* Option Tabs */
         .option-tabs {
             display: grid;
@@ -572,27 +692,31 @@
         <div class="sidebar-header">
             <div class="logo">
                 <div class="logo-dot"></div>
-                AI Dealership Platform
+                Dealer Dev Ops
             </div>
         </div>
 
         <nav class="sidebar-nav">
             <div class="nav-section">
                 <div class="nav-label">Core</div>
-                <div class="nav-item active" onclick="selectTab('dashboard')">
+                <div class="nav-item active" onclick="selectTab('dashboard', this)">
                     <span>📊</span>
                     Dashboard
                     <span class="nav-indicator active"></span>
                 </div>
-                <div class="nav-item" onclick="selectTab('inventory')">
+                <div class="nav-item" onclick="selectTab('scraper', this)">
+                    <span>ðŸ“¥</span>
+                    Scraper
+                </div>
+                <div class="nav-item" onclick="selectTab('inventory', this)">
                     <span>🚗</span>
                     Inventory
                 </div>
-                <div class="nav-item" onclick="selectTab('quality')">
+                <div class="nav-item" onclick="selectTab('quality', this)">
                     <span>✓</span>
                     Quality
                 </div>
-                <div class="nav-item" onclick="selectTab('database')">
+                <div class="nav-item" onclick="selectTab('database', this)">
                     <span>🗄️</span>
                     Database
                 </div>
@@ -629,7 +753,7 @@
                     Analytics
                     <span class="nav-indicator"></span>
                 </div>
-                <div class="nav-item" onclick="selectTab('settings')">
+                <div class="nav-item" onclick="selectTab('settings', this)">
                     <span>⚙️</span>
                     Settings
                 </div>
@@ -650,9 +774,7 @@
         <!-- Top Bar -->
         <header class="top-bar">
             <div class="top-bar-left">
-                <div class="search-container">
-                    <input type="text" class="search-input" placeholder="Search vehicles, make, model, VIN...">
-                </div>
+                <h1 class="panel-title">Dealer Dev Ops</h1>
             </div>
             <div class="top-bar-right">
                 <button class="btn btn-secondary">
@@ -664,207 +786,292 @@
                 </button>
             </div>
         </header>
-
         <!-- Content Area -->
         <div class="content-area">
-            <!-- Stats Grid -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <span class="stat-title">Quality Score</span>
-                        <span class="stat-trend up">↑ 3.2%</span>
+            <div class="page" id="page-dashboard">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-title">Quality Score</span>
+                            <span class="stat-trend up">↑ 3.2%</span>
+                        </div>
+                        <div class="stat-value">87%</div>
+                        <div class="stat-label">Average across 59 vehicles</div>
+                        <div class="stat-bar"><div class="stat-bar-fill" style="width: 87%"></div></div>
                     </div>
-                    <div class="stat-value">87%</div>
-                    <div class="stat-label">Average across 59 vehicles</div>
-                    <div class="stat-bar">
-                        <div class="stat-bar-fill" style="width: 87%"></div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-title">Vehicles</span>
+                            <span class="stat-trend up">↑ 12</span>
+                        </div>
+                        <div class="stat-value">59</div>
+                        <div class="stat-label">Total inventory</div>
+                        <div class="stat-bar"><div class="stat-bar-fill" style="width: 59%"></div></div>
                     </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <span class="stat-title">Vehicles</span>
-                        <span class="stat-trend up">↑ 12</span>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-title">High Quality</span>
+                            <span class="stat-trend up">↑ 5</span>
+                        </div>
+                        <div class="stat-value">42</div>
+                        <div class="stat-label">Quality score ≥ 80%</div>
+                        <div class="stat-bar"><div class="stat-bar-fill" style="width: 71%"></div></div>
                     </div>
-                    <div class="stat-value">59</div>
-                    <div class="stat-label">Total inventory</div>
-                    <div class="stat-bar">
-                        <div class="stat-bar-fill" style="width: 59%"></div>
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <span class="stat-title">High Quality</span>
-                        <span class="stat-trend up">↑ 5</span>
-                    </div>
-                    <div class="stat-value">42</div>
-                    <div class="stat-label">Quality score ≥ 80%</div>
-                    <div class="stat-bar">
-                        <div class="stat-bar-fill" style="width: 71%"></div>
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <span class="stat-title">Issues</span>
-                        <span class="stat-trend down">↓ 2</span>
-                    </div>
-                    <div class="stat-value">7</div>
-                    <div class="stat-label">Flagged for review</div>
-                    <div class="stat-bar">
-                        <div class="stat-bar-fill" style="width: 12%; background: var(--accent-error);"></div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-title">Issues</span>
+                            <span class="stat-trend down">↓ 2</span>
+                        </div>
+                        <div class="stat-value">7</div>
+                        <div class="stat-label">Flagged for review</div>
+                        <div class="stat-bar"><div class="stat-bar-fill" style="width: 12%; background: var(--accent-error);"></div></div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Options Tabs -->
-            <div class="option-tabs">
-                <div class="option-tab selected" onclick="selectOption('a')">
-                    <div class="option-tab-icon">📊</div>
-                    <div class="option-tab-content">
-                        <div class="option-tab-title">Option A</div>
-                        <div class="option-tab-desc">Dashboard & Analytics</div>
-                    </div>
-                    <div class="option-tab-indicator"></div>
-                </div>
-
-                <div class="option-tab" onclick="selectOption('b')">
-                    <div class="option-tab-icon">🚗</div>
-                    <div class="option-tab-content">
-                        <div class="option-tab-title">Option B</div>
-                        <div class="option-tab-desc">Inventory Management</div>
-                    </div>
-                    <div class="option-tab-indicator"></div>
-                </div>
-
-                <div class="option-tab" onclick="selectOption('c')">
-                    <div class="option-tab-icon">📥</div>
-                    <div class="option-tab-content">
-                        <div class="option-tab-title">Option C</div>
-                        <div class="option-tab-desc">Scraping & Sources</div>
-                    </div>
-                    <div class="option-tab-indicator"></div>
-                </div>
-
-                <div class="option-tab" onclick="selectOption('d')">
-                    <div class="option-tab-icon">🎨</div>
-                    <div class="option-tab-content">
-                        <div class="option-tab-title">Option D</div>
-                        <div class="option-tab-desc">Database & Quality</div>
-                    </div>
-                    <div class="option-tab-indicator"></div>
-                </div>
-            </div>
-
-            <!-- Content Panel -->
-            <div class="content-panel" id="content-panel">
-                <!-- Dashboard Content -->
-                <div id="option-a-content">
+                <div class="content-panel">
                     <div class="panel-header">
-                        <h2 class="panel-title">Dashboard & Analytics</h2>
+                        <h2 class="panel-title">Dashboard</h2>
                         <span class="status-badge active">Live</span>
                     </div>
-
                     <p class="panel-subtitle">Platform Overview</p>
-                    <div style="color: var(--text-muted); margin-bottom: var(--spacing-lg);">
-                        Welcome to your AI-powered dealership platform. Get insights into inventory quality, scraping performance, and data trends.
-                    </div>
-
-                    <h3 style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin: var(--spacing-lg) 0 0 0 var(--spacing-md);">
-                        Performance Metrics
-                    </h3>
-
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--spacing-md); margin-bottom: var(--spacing-lg);">
-                        <div style="background: var(--bg-elevated); padding: var(--spacing-lg); border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
-                            <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 500; margin-bottom: var(--spacing-sm);">
-                                Scrapes Today
-                            </div>
-                            <div style="font-size: 24px; font-weight: 700; color: var(--text-primary);">12</div>
-                            <div style="font-size: 11px; color: var(--text-muted); margin-top: var(--spacing-xs);">
-                                Vehicles scraped today
-                            </div>
+                    <div style="color: var(--text-muted);">Summary page for scraping throughput, inventory health, and DB quality signals.</div>
+                    <div class="split-grid">
+                        <div class="info-card">
+                            <div class="info-title">Latest Scrape</div>
+                            <div class="info-value">Cars.com - Austin</div>
+                            <div style="color: var(--text-muted); font-size: 12px; margin-top: 8px;">Completed 18 minutes ago, 14 vehicles parsed.</div>
                         </div>
-                        <div style="background: var(--bg-elevated); padding: var(--spacing-lg); border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
-                            <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 500; margin-bottom: var(--spacing-sm);">
-                                Success Rate
-                            </div>
-                            <div style="font-size: 24px; font-weight: 700; color: var(--accent-success);">94%</div>
-                            <div style="font-size: 11px; color: var(--text-muted); margin-top: var(--spacing-xs);">
-                                Scrapes completed successfully
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="empty-state" style="margin-top: var(--spacing-lg);">
-                        <div class="empty-icon">📊</div>
-                        <div class="empty-text">
-                            Detailed analytics coming in Phase 2
-                        </div>
-                        <div style="font-size: 12px; color: var(--text-muted); margin-top: var(--spacing-sm);">
-                            Including: Vehicle trends, Make/Model distribution, Scraping performance, Quality reports
+                        <div class="info-card">
+                            <div class="info-title">Data Health</div>
+                            <div class="info-value">93% Fields Complete</div>
+                            <div style="color: var(--text-muted); font-size: 12px; margin-top: 8px;">Missing fields concentrated in mileage and trim.</div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Inventory Content -->
-                <div id="option-b-content" style="display: none;">
+            <div class="page" id="page-scraper" style="display: none;">
+                <div class="content-panel">
                     <div class="panel-header">
-                        <h2 class="panel-title">Vehicle Inventory</h2>
-                        <div class="panel-actions">
-                            <button class="btn btn-secondary">Export CSV</button>
-                            <button class="btn btn-secondary">Filter</button>
-                        </div>
+                        <h2 class="panel-title">Scraper</h2>
+                        <div class="panel-actions"><button class="btn btn-primary">New Source</button></div>
                     </div>
-
-                    <p class="panel-subtitle">Manage your vehicle inventory with filtering and bulk actions.</p>
-
-                    <div class="empty-state" style="margin-top: var(--spacing-lg);">
-                        <div class="empty-icon">🚗</div>
-                        <div class="empty-text">Inventory management interface</div>
-                        <div style="font-size: 12px; color: var(--text-muted); margin-top: var(--spacing-sm);">
-                            Full CRUD operations, advanced filtering, bulk export, and vehicle details view coming in Phase 2.
+                    <p class="panel-subtitle">Dedicated scraping page for source setup and batch runs.</p>
+                    <div style="display: grid; gap: var(--spacing-md); margin-top: var(--spacing-lg);">
+                        <div style="background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: var(--spacing-lg);">
+                            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: var(--spacing-sm);">Source Name</div>
+                            <input type="text" class="search-input" placeholder="Example: Cars.com - Austin" style="max-width: 100%;">
+                        </div>
+                        <div style="background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: var(--spacing-lg);">
+                            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: var(--spacing-sm);">Target URL</div>
+                            <input
+                                id="scraper-target-url"
+                                type="text"
+                                class="search-input"
+                                placeholder="https://example.com/inventory"
+                                style="max-width: 100%;"
+                                oninput="updateScraperPreview()"
+                            >
+                        </div>
+                        <div style="background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: var(--spacing-lg);">
+                            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: var(--spacing-sm);">Curl Command</div>
+                            <textarea
+                                id="scraper-curl-command"
+                                class="search-input"
+                                rows="6"
+                                placeholder="Paste curl command here..."
+                                style="padding-left: var(--spacing-md); resize: vertical;"
+                                oninput="updateScraperPreview()"
+                            ></textarea>
+                        </div>
+                        <div style="background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: var(--spacing-lg);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-sm);">
+                                <div style="font-size: 12px; color: var(--text-muted);">URL Preview</div>
+                                <a id="scraper-preview-link" href="#" target="_blank" rel="noopener noreferrer" style="color: var(--accent-primary); font-size: 12px; text-decoration: none;">Open in new tab</a>
+                            </div>
+                            <div id="scraper-preview-status" style="font-size: 12px; color: var(--text-muted); margin-bottom: var(--spacing-sm);">
+                                Enter a URL or paste a curl command to preview the target site.
+                            </div>
+                            <iframe id="scraper-preview-frame" class="preview-frame" title="Scraper URL Preview"></iframe>
+                        </div>
+                        <div style="display: flex; gap: var(--spacing-sm);">
+                            <button class="btn btn-primary">Scrape & Add</button>
+                            <button class="btn btn-secondary">Test Scrape</button>
+                            <button class="btn btn-secondary">Batch Scrape</button>
+                        </div>
+                        <div class="table-wrap">
+                            <table class="data-table">
+                                <thead><tr><th>Run Time</th><th>Source</th><th>Cars</th><th>Status</th></tr></thead>
+                                <tbody>
+                                    <tr><td>10:42 AM</td><td>Cars.com - Austin</td><td>14</td><td>Success</td></tr>
+                                    <tr><td>9:17 AM</td><td>AutoTrader - Dallas</td><td>0</td><td>Failed (blocked)</td></tr>
+                                    <tr><td>8:54 AM</td><td>Dealer Site - Denver</td><td>9</td><td>Success</td></tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Scraping Content -->
-                <div id="option-c-content" style="display: none;">
+            <div class="page" id="page-inventory" style="display: none;">
+                <div class="content-panel">
                     <div class="panel-header">
-                        <h2 class="panel-title">Scraping & Sources</h2>
-                        <div class="panel-actions">
-                            <button class="btn btn-primary">New Source</button>
-                        </div>
+                        <h2 class="panel-title">Inventory</h2>
+                        <div class="panel-actions"><button class="btn btn-secondary">Export CSV</button><button class="btn btn-secondary">Filter</button></div>
                     </div>
-
-                    <p class="panel-subtitle">Configure automated scraping from dealership websites.</p>
-
-                    <div class="empty-state" style="margin-top: var(--spacing-lg);">
-                        <div class="empty-icon">📥</div>
-                        <div class="empty-text">Scraping configuration interface</div>
-                        <div style="font-size: 12px; color: var(--text-muted); margin-top: var(--spacing-sm);">
-                            Add new sources, configure scraping schedules, view scrape history, and manage batch processing. Coming in Phase 2.
-                        </div>
+                    <p class="panel-subtitle">Inventory page with row-level browsing.</p>
+                    <div class="table-toolbar">
+                        <input type="text" class="search-input" placeholder="Search inventory sample rows...">
+                    </div>
+                    <div class="table-wrap">
+                        <table class="data-table">
+                            <thead><tr><th>VIN</th><th>Make</th><th>Model</th><th>Year</th><th>Miles</th><th>Price</th><th>Source</th></tr></thead>
+                            <tbody>
+                                <tr><td>1FTFW1E57MFA12345</td><td>Ford</td><td>F-150</td><td>2021</td><td>45,200</td><td>$38,995</td><td>Cars.com</td></tr>
+                                <tr><td>2T1BURHE1GC112345</td><td>Toyota</td><td>RAV4</td><td>2019</td><td>38,450</td><td>$26,995</td><td>AutoTrader</td></tr>
+                                <tr><td>JM1BK3240L0123456</td><td>Mazda</td><td>CX-5</td><td>2022</td><td>22,100</td><td>$33,495</td><td>Cars.com</td></tr>
+                                <tr><td>5YJ3E1E8JF123456</td><td>Tesla</td><td>Model 3</td><td>2020</td><td>34,200</td><td>$32,995</td><td>Dealer API</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
+            </div>
 
-                <!-- Database Content -->
-                <div id="option-d-content" style="display: none;">
+            <div class="page" id="page-quality" style="display: none;">
+                <div class="content-panel">
                     <div class="panel-header">
-                        <h2 class="panel-title">Database & Quality</h2>
-                        <div class="panel-actions">
-                            <button class="btn btn-secondary">Export Data</button>
-                            <button class="btn btn-secondary">Quality Report</button>
+                        <h2 class="panel-title">Quality</h2>
+                        <div class="panel-actions"><button class="btn btn-secondary">Recalculate</button></div>
+                    </div>
+                    <p class="panel-subtitle">Quality score and issue tracking by vehicle.</p>
+                    <div class="split-grid">
+                        <div class="info-card">
+                            <div class="info-title">Flagged Records</div>
+                            <div class="info-value">7</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-title">Average Quality</div>
+                            <div class="info-value">87%</div>
                         </div>
                     </div>
+                    <div class="table-wrap">
+                        <table class="data-table">
+                            <thead><tr><th>VIN</th><th>Score</th><th>Severity</th><th>Flags</th></tr></thead>
+                            <tbody>
+                                <tr><td>1FTFW1E57MFA12345</td><td>92</td><td>Info</td><td>None</td></tr>
+                                <tr><td>2T1BURHE1GC112345</td><td>88</td><td>Warning</td><td>Minor trim mismatch</td></tr>
+                                <tr><td>JF2SKACC9KH2345678</td><td>60</td><td>Error</td><td>Mileage/description incomplete</td></tr>
+                                <tr><td>1F1F15W75KEF123456</td><td>45</td><td>Error</td><td>High mileage + sparse features</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
-                    <p class="panel-subtitle">View database schema, run queries, and access quality analysis tools.</p>
+            <div class="page" id="page-database" style="display: none;">
+                <div class="content-panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Database</h2>
+                        <div class="panel-actions"><button class="btn btn-secondary">Export Data</button><button class="btn btn-secondary">Run Query</button></div>
+                    </div>
+                    <p class="panel-subtitle">View relational data and inspect indexed inventory rows.</p>
+                    <div class="split-grid">
+                        <div class="info-card">
+                            <div class="info-title">Schema Snapshot</div>
+                            <div style="color: var(--text-primary); font-size: 13px;">`vehicles` + `dealers` + `dealer_locations`</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-title">Last Query</div>
+                            <div style="color: var(--text-primary); font-size: 13px;">SELECT * FROM vehicles ORDER BY scraped_at DESC LIMIT 50;</div>
+                        </div>
+                    </div>
+                    <div class="table-toolbar" style="margin-top: var(--spacing-lg);">
+                        <input id="db-table-search" type="text" class="search-input" placeholder="Search DB rows by VIN, make, model, body type..." oninput="filterDatabaseTable(this.value)">
+                        <div class="field-picker" id="db-field-picker">
+                            <label class="field-pill"><input type="checkbox" data-field="vin" checked>VIN</label>
+                            <label class="field-pill"><input type="checkbox" data-field="year" checked>Year</label>
+                            <label class="field-pill"><input type="checkbox" data-field="make" checked>Make</label>
+                            <label class="field-pill"><input type="checkbox" data-field="model" checked>Model</label>
+                            <label class="field-pill"><input type="checkbox" data-field="trim">Trim</label>
+                            <label class="field-pill"><input type="checkbox" data-field="body" checked>Body</label>
+                            <label class="field-pill"><input type="checkbox" data-field="powertrain" checked>Powertrain</label>
+                            <label class="field-pill"><input type="checkbox" data-field="transmission">Transmission</label>
+                            <label class="field-pill"><input type="checkbox" data-field="fuel">Fuel</label>
+                            <label class="field-pill"><input type="checkbox" data-field="mileage">Mileage</label>
+                            <label class="field-pill"><input type="checkbox" data-field="color">Exterior Color</label>
+                            <label class="field-pill"><input type="checkbox" data-field="stock">Stock #</label>
+                            <label class="field-pill"><input type="checkbox" data-field="source">Source</label>
+                            <label class="field-pill"><input type="checkbox" data-field="customer" checked>Customer</label>
+                            <label class="field-pill"><input type="checkbox" data-field="price" checked>Price</label>
+                            <label class="field-pill"><input type="checkbox" data-field="quality" checked>Quality</label>
+                        </div>
+                    </div>
+                    <div class="table-wrap db-table-wrap">
+                        <table class="data-table" id="db-vehicles-table">
+                            <thead>
+                                <tr>
+                                    <th data-col="vin">VIN</th>
+                                    <th data-col="year">Year</th>
+                                    <th data-col="make">Make</th>
+                                    <th data-col="model">Model</th>
+                                    <th data-col="trim">Trim</th>
+                                    <th data-col="body">Body</th>
+                                    <th data-col="powertrain">Powertrain</th>
+                                    <th data-col="transmission">Transmission</th>
+                                    <th data-col="fuel">Fuel</th>
+                                    <th data-col="mileage">Mileage</th>
+                                    <th data-col="color">Exterior Color</th>
+                                    <th data-col="stock">Stock #</th>
+                                    <th data-col="source">Source</th>
+                                    <th data-col="customer">Customer</th>
+                                    <th data-col="price">Price</th>
+                                    <th data-col="quality">Quality</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td data-col="vin">1FTFW1E57MFA12345</td><td data-col="year">2021</td><td data-col="make">Ford</td><td data-col="model">F-150</td><td data-col="trim">XLT</td><td data-col="body">Pickup Truck</td><td data-col="powertrain">4WD</td><td data-col="transmission">10-Speed Auto</td><td data-col="fuel">Gasoline</td><td data-col="mileage">45,200</td><td data-col="color">Oxford White</td><td data-col="stock">DEN451234</td><td data-col="source">Cars.com</td><td data-col="customer">Open Lead</td><td data-col="price">$38,995</td><td data-col="quality">92</td>
+                                </tr>
+                                <tr>
+                                    <td data-col="vin">2T1BURHE1GC112345</td><td data-col="year">2019</td><td data-col="make">Toyota</td><td data-col="model">RAV4</td><td data-col="trim">XLE</td><td data-col="body">SUV</td><td data-col="powertrain">AWD</td><td data-col="transmission">8-Speed Auto</td><td data-col="fuel">Gasoline</td><td data-col="mileage">38,450</td><td data-col="color">Celestial Silver</td><td data-col="stock">DEN234567</td><td data-col="source">AutoTrader</td><td data-col="customer">Sarah M.</td><td data-col="price">$26,995</td><td data-col="quality">88</td>
+                                </tr>
+                                <tr>
+                                    <td data-col="vin">JM1BK3240L0123456</td><td data-col="year">2022</td><td data-col="make">Mazda</td><td data-col="model">CX-5</td><td data-col="trim">Grand Touring</td><td data-col="body">SUV</td><td data-col="powertrain">AWD</td><td data-col="transmission">6-Speed Auto</td><td data-col="fuel">Gasoline</td><td data-col="mileage">22,100</td><td data-col="color">Machine Gray</td><td data-col="stock">DEN345678</td><td data-col="source">Cars.com</td><td data-col="customer">Open Lead</td><td data-col="price">$33,495</td><td data-col="quality">95</td>
+                                </tr>
+                                <tr>
+                                    <td data-col="vin">5YJ3E1E8JF123456</td><td data-col="year">2020</td><td data-col="make">Tesla</td><td data-col="model">Model 3</td><td data-col="trim">Long Range</td><td data-col="body">Sedan</td><td data-col="powertrain">RWD</td><td data-col="transmission">Single Speed</td><td data-col="fuel">Electric</td><td data-col="mileage">34,200</td><td data-col="color">Solid Black</td><td data-col="stock">DEN890123</td><td data-col="source">Dealer API</td><td data-col="customer">Michael R.</td><td data-col="price">$32,995</td><td data-col="quality">90</td>
+                                </tr>
+                                <tr>
+                                    <td data-col="vin">2HGFC3F53KH523456</td><td data-col="year">2019</td><td data-col="make">Honda</td><td data-col="model">Civic</td><td data-col="trim">Touring</td><td data-col="body">Sedan</td><td data-col="powertrain">FWD</td><td data-col="transmission">CVT</td><td data-col="fuel">Gasoline</td><td data-col="mileage">41,500</td><td data-col="color">Polished Metal</td><td data-col="stock">DEN901234</td><td data-col="source">Cars.com</td><td data-col="customer">Open Lead</td><td data-col="price">$22,995</td><td data-col="quality">89</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
-                    <div class="empty-state" style="margin-top: var(--spacing-lg);">
-                        <div class="empty-icon">🎨</div>
-                        <div class="empty-text">Database management interface</div>
-                        <div style="font-size: 12px; color: var(--text-muted); margin-top: var(--spacing-sm);">
-                            Schema viewer, SQL query editor, data export, and quality recalculation tools coming in Phase 2.
+            <div class="page" id="page-settings" style="display: none;">
+                <div class="content-panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Settings</h2>
+                        <div class="panel-actions"><button class="btn btn-primary">Save</button></div>
+                    </div>
+                    <p class="panel-subtitle">Static configuration placeholders while scraper logic is being finished.</p>
+                    <div class="split-grid">
+                        <div class="info-card">
+                            <div class="info-title">Environment</div>
+                            <div class="info-value">Development</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-title">Database Mode</div>
+                            <div class="info-value">Hybrid (planned)</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-title">Scrape Batch Size</div>
+                            <div class="info-value">5 requests</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-title">Default Source Label</div>
+                            <div class="info-value">unknown</div>
                         </div>
                     </div>
                 </div>
@@ -873,43 +1080,105 @@
     </main>
 
     <script>
-        function selectTab(tabName) {
-            // Update sidebar active state
-            document.querySelectorAll('.nav-item').forEach(item => {
+        function selectTab(tabName, element) {
+            document.querySelectorAll('.nav-item').forEach((item) => {
                 item.classList.remove('active');
                 const indicator = item.querySelector('.nav-indicator');
                 if (indicator) indicator.classList.remove('active');
             });
 
-            // Activate clicked tab
-            event.currentTarget.classList.add('active');
-            const indicator = event.currentTarget.querySelector('.nav-indicator');
-            if (indicator) indicator.classList.add('active');
-        }
-
-        function selectOption(option) {
-            // Update option tabs
-            document.querySelectorAll('.option-tab').forEach(tab => {
-                tab.classList.remove('selected');
-            });
-
-            event.currentTarget.classList.add('selected');
-
-            // Hide all content panels
-            document.querySelectorAll('[id$="-content"]').forEach(content => {
-                content.style.display = 'none';
-            });
-
-            // Show selected content
-            const contentPanel = document.getElementById(option + '-content');
-            if (contentPanel) {
-                contentPanel.style.display = 'block';
-                contentPanel.style.opacity = '0';
-                setTimeout(() => {
-                    contentPanel.style.opacity = '1';
-                }, 50);
+            if (element) {
+                element.classList.add('active');
+                const indicator = element.querySelector('.nav-indicator');
+                if (indicator) indicator.classList.add('active');
             }
+
+            const route = tabName;
+            const pages = ['dashboard', 'scraper', 'inventory', 'quality', 'database', 'settings'];
+            pages.forEach((name) => {
+                const page = document.getElementById(`page-${name}`);
+                if (page) page.style.display = name === route ? 'block' : 'none';
+            });
         }
+
+        function filterDatabaseTable(searchValue) {
+            const value = (searchValue || '').toLowerCase().trim();
+            const rows = document.querySelectorAll('#db-vehicles-table tbody tr');
+
+            rows.forEach((row) => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(value) ? '' : 'none';
+            });
+        }
+
+        function applyDatabaseFieldVisibility() {
+            const checkboxes = document.querySelectorAll('#db-field-picker input[type="checkbox"][data-field]');
+            checkboxes.forEach((checkbox) => {
+                const field = checkbox.getAttribute('data-field');
+                const visible = checkbox.checked;
+                const cells = document.querySelectorAll(`#db-vehicles-table [data-col="${field}"]`);
+                cells.forEach((cell) => {
+                    cell.style.display = visible ? '' : 'none';
+                });
+            });
+        }
+
+        function initDatabaseFieldPicker() {
+            const checkboxes = document.querySelectorAll('#db-field-picker input[type="checkbox"][data-field]');
+            checkboxes.forEach((checkbox) => {
+                checkbox.addEventListener('change', applyDatabaseFieldVisibility);
+            });
+            applyDatabaseFieldVisibility();
+        }
+
+        function extractUrlFromCurl(curlCommand) {
+            if (!curlCommand) return '';
+            const match = curlCommand.match(/curl\s+(?:-[^\s]+\s+)*['"]?(https?:\/\/[^\s'"]+)['"]?/i);
+            return match ? match[1] : '';
+        }
+
+        function normalizeUrl(url) {
+            if (!url) return '';
+            const trimmed = url.trim();
+            if (!trimmed) return '';
+            if (/^https?:\/\//i.test(trimmed)) return trimmed;
+            return `https://${trimmed}`;
+        }
+
+        function updateScraperPreview() {
+            const urlInput = document.getElementById('scraper-target-url');
+            const curlInput = document.getElementById('scraper-curl-command');
+            const frame = document.getElementById('scraper-preview-frame');
+            const link = document.getElementById('scraper-preview-link');
+            const status = document.getElementById('scraper-preview-status');
+
+            if (!urlInput || !curlInput || !frame || !link || !status) return;
+
+            const explicitUrl = normalizeUrl(urlInput.value);
+            const curlUrl = normalizeUrl(extractUrlFromCurl(curlInput.value));
+            const resolvedUrl = explicitUrl || curlUrl;
+
+            if (!resolvedUrl) {
+                frame.removeAttribute('src');
+                link.href = '#';
+                status.textContent = 'Enter a URL or paste a curl command to preview the target site.';
+                return;
+            }
+
+            if (!explicitUrl && curlUrl) {
+                urlInput.value = curlUrl;
+            }
+
+            frame.src = resolvedUrl;
+            link.href = resolvedUrl;
+            status.textContent = `Preview target: ${resolvedUrl}`;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initDatabaseFieldPicker();
+        });
     </script>
 </body>
 </html>
+
+

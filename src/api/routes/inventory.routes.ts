@@ -1,37 +1,29 @@
 import { Router, Request, Response } from 'express';
 import { InventoryService } from '../../services/inventory.service';
-import { asyncHandler } from '../../utils/async-handler';
+import { asyncHandler } from '../../utils/helpers';
+import { InventoryRepository } from '../../repositories/inventory.repository';
+import { pool } from '../../config/db';
 
 const router = Router();
-const inventoryService = new InventoryService();
+const inventoryService = new InventoryService(new InventoryRepository(pool));
+const headerToString = (value: string | string[] | undefined): string => {
+  if (Array.isArray(value)) return value[0] || '';
+  return value || '';
+};
 
 // Get all vehicles with filters
 router.get('/', asyncHandler(async (req: Request, res: Response) => {
-  const dealershipId = req.headers['x-dealership-id'] as string;
+  const dealershipId = headerToString(req.headers['x-dealership-id']);
   const filters = req.query;
 
-  const result = await inventoryService.searchVehicles(
-    {
-      ...filters,
-      dealershipId
-    } as any
-  );
+  const result = await inventoryService.searchVehicles({ ...filters } as any, dealershipId);
 
   res.json(result);
 }));
 
-// Get single vehicle
-router.get('/:id', asyncHandler(async (req: Request, res: Response) => {
-  const dealershipId = req.headers['x-dealership-id'] as string;
-  const id = parseInt(req.params.id);
-
-  const vehicle = await inventoryService.getVehicle(id, dealershipId);
-  res.json(vehicle);
-}));
-
 // Add new vehicle
 router.post('/', asyncHandler(async (req: Request, res: Response) => {
-  const dealershipId = req.headers['x-dealership-id'] as string;
+  const dealershipId = headerToString(req.headers['x-dealership-id']);
   const data = req.body;
 
   const result = await inventoryService.addVehicle(data, dealershipId);
@@ -40,8 +32,8 @@ router.post('/', asyncHandler(async (req: Request, res: Response) => {
 
 // Update vehicle
 router.put('/:id', asyncHandler(async (req: Request, res: Response) => {
-  const dealershipId = req.headers['x-dealership-id'] as string;
-  const id = parseInt(req.params.id);
+  const dealershipId = headerToString(req.headers['x-dealership-id']);
+  const id = parseInt(String(req.params.id), 10);
   const data = req.body;
 
   const vehicle = await inventoryService.updateVehicle(id, data, dealershipId);
@@ -50,8 +42,8 @@ router.put('/:id', asyncHandler(async (req: Request, res: Response) => {
 
 // Delete vehicle
 router.delete('/:id', asyncHandler(async (req: Request, res: Response) => {
-  const dealershipId = req.headers['x-dealership-id'] as string;
-  const id = parseInt(req.params.id);
+  const dealershipId = headerToString(req.headers['x-dealership-id']);
+  const id = parseInt(String(req.params.id), 10);
 
   await inventoryService.deleteVehicle(id, dealershipId);
   res.status(204).send();
@@ -59,10 +51,19 @@ router.delete('/:id', asyncHandler(async (req: Request, res: Response) => {
 
 // Get stats
 router.get('/stats', asyncHandler(async (req: Request, res: Response) => {
-  const dealershipId = req.headers['x-dealership-id'] as string;
+  const dealershipId = headerToString(req.headers['x-dealership-id']);
 
   const stats = await inventoryService.getStats(dealershipId);
   res.json(stats);
+}));
+
+// Get single vehicle
+router.get('/:id', asyncHandler(async (req: Request, res: Response) => {
+  const dealershipId = headerToString(req.headers['x-dealership-id']);
+  const id = parseInt(String(req.params.id), 10);
+
+  const vehicle = await inventoryService.getVehicle(id, dealershipId);
+  res.json(vehicle);
 }));
 
 export default router;

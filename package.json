@@ -2,21 +2,36 @@
   "name": "dealership-platform",
   "version": "2.0.0",
   "description": "AI-powered dealership platform with modern dashboard",
-  "main": "src/index.js",
+  "main": "server.js",
   "scripts": {
-    "dev": "nodemon src/index.js",
-    "start": "node src/index.js",
-    "type-check": "echo 'No TypeScript configured yet'"
+    "dev": "nodemon server.js",
+    "start": "node server.js",
+    "start:pg": "node server_pg.js",
+    "db:pg:init": "node scripts/init-postgres.js",
+    "type-check": "tsc --noEmit",
+    "test:smoke": "node scripts/smoke-health.js",
+    "ci": "npm run type-check && npm run test:smoke"
   },
   "dependencies": {
+    "axios": "^1.13.1",
+    "cheerio": "^1.1.2",
+    "compression": "^1.8.1",
     "express": "^4.18.2",
-    "pg": "^8.11.3",
     "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express-rate-limit": "^8.2.1",
     "helmet": "^7.1.0",
-    "dotenv": "^16.3.1"
+    "pg": "^8.11.3",
+    "sqlite3": "^5.1.7"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2"
+    "@types/compression": "^1.8.1",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.3.1",
+    "@types/pg": "^8.15.6",
+    "nodemon": "^3.0.2",
+    "typescript": "^5.9.2"
   },
   "engines": {
     "node": ">=18.0.0",
