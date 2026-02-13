@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Scraper Dashboard Pro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #333;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 14px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+
+        .nav-tab {
+            padding: 10px 20px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            color: #888;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nav-tab:hover {
+            background: #252525;
+            color: #e0e0e0;
+        }
+
+        .nav-tab.active {
+            background: #00d4aa;
+            color: #000;
+            border-color: #00d4aa;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #00d4aa;
+        }
+
+        .stat-label {
+            color: #888;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 450px 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: #1a1a1a;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #333;
+        }
+
+        .panel-header {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            color: #888;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"],
+        select {
+            width: 100%;
+            background: #0f0f0f;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 10px;
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #00d4aa;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            background: #0f0f0f;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 12px;
+            color: #e0e0e0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            resize: vertical;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #00d4aa;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #00d4aa;
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            background: #00b896;
+        }
+
+        .btn-secondary {
+            background: #333;
+            color: #e0e0e0;
+        }
+
+        .btn-secondary:hover {
+            background: #444;
+        }
+
+        .btn-danger {
+            background: #ff4444;
+            color: #fff;
+        }
+
+        .btn-danger:hover {
+            background: #cc3333;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .toolbar-left {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .table-container {
+            max-height: 550px;
+            overflow-y: auto;
+            border: 1px solid #333;
+            border-radius: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th, td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+
+        th {
+            background: #0f0f0f;
+            color: #888;
+            font-weight: normal;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        tr:hover {
+            background: #252525;
+        }
+
+        .price {
+            color: #00d4aa;
+            font-weight: bold;
+        }
+
+        .year {
+            color: #fff;
+        }
+
+        .quality-score {
+            display: inline-block;
+            width: 50px;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .quality-score-bar {
+            height: 100%;
+            transition: all 0.3s;
+        }
+
+        .quality-high { background: #00d4aa; }
+        .quality-medium { background: #ffaa00; }
+        .quality-low { background: #ff4444; }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .badge-duplicate {
+            background: #ff4444;
+            color: #fff;
+        }
+
+        .status {
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .status.success {
+            background: rgba(0, 212, 170, 0.1);
+            color: #00d4aa;
+            border: 1px solid #00d4aa;
+        }
+
+        .status.error {
+            background: rgba(255, 68, 68, 0.1);
+            color: #ff4444;
+            border: 1px solid #ff4444;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #888;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #333;
+            border-top-color: #00d4aa;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .vin {
+            font-family: 'Courier New', monospace;
+            background: #0f0f0f;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-label {
+            color: #888;
+            font-size: 12px;
+            margin-bottom: 3px;
+        }
+
+        .detail-value {
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+
+        .images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .images-grid img {
+            width: 100%;
+            height: 90px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #333;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .images-grid img:hover {
+            transform: scale(1.05);
+        }
+
+        .features-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .feature-tag {
+            background: #252525;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            color: #888;
+        }
+
+        .quality-flags {
+            margin-top: 15px;
+            padding: 15px;
+            background: #0f0f0f;
+            border-radius: 4px;
+        }
+
+        .flag {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+
+        .flag.error { color: #ff4444; }
+        .flag.warning { color: #ffaa00; }
+        .flag.info { color: #00d4aa; }
+
+        .progress-container {
+            margin: 20px 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #333;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #00d4aa;
+            transition: width 0.3s;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 8px;
+            color: #888;
+            font-size: 13px;
+        }
+
+        .batch-results {
+            margin-top: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: #0f0f0f;
+            border-radius: 4px;
+            padding: 10px;
+        }
+
+        .batch-result {
+            padding: 8px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .batch-result.success {
+            background: rgba(0, 212, 170, 0.1);
+            border-left: 3px solid #00d4aa;
+        }
+
+        .batch-result.error {
+            background: rgba(255, 68, 68, 0.1);
+            border-left: 3px solid #ff4444;
+        }
+
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .analytics-card {
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+
+        .chart-placeholder {
+            height: 200px;
+            background: #0f0f0f;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #888;
+            margin-top: 15px;
+        }
+
+        .sources-list {
+            list-style: none;
+            margin-top: 15px;
+        }
+
+        .sources-list li {
+            padding: 10px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sources-list li:last-child {
+            border-bottom: none;
+        }
+
+        .source-count {
+            background: #00d4aa;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .test-output {
+            background: #0f0f0f;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .test-car {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+
+        .test-car-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #333;
+        }
+
+        .test-car-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .test-car-detail {
+            display: flex;
+            gap: 10px;
+        }
+
+        .test-car-detail label {
+            margin: 0;
+            width: 80px;
+        }
+
+        .test-car-detail span {
+            color: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-top">
+                <h1>🚗 Car Scraper Pro</h1>
+                <span class="subtitle">Advanced dev tool for car inventory databases</span>
+            </div>
+            <div class="nav-tabs">
+                <button class="nav-tab active" onclick="switchTab('scrape')">Scrape</button>
+                <button class="nav-tab" onclick="switchTab('inventory')">Inventory</button>
+                <button class="nav-tab" onclick="switchTab('analytics')">Analytics</button>
+                <button class="nav-tab" onclick="switchTab('test')">Test API</button>
+            </div>
+        </header>
+
+        <!-- Scrape Tab -->
+        <div id="scrape-tab" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalCars">0</div>
+                    <div class="stat-label">Total Cars</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalSources">0</div>
+                    <div class="stat-label">Data Sources</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="avgPrice">$0</div>
+                    <div class="stat-label">Average Price</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="avgQuality">0%</div>
+                    <div class="stat-label">Avg Quality Score</div>
+                </div>
+            </div>
+
+            <div class="main-grid">
+                <div class="panel">
+                    <div class="panel-header">
+                        <span>Add New Source</span>
+                    </div>
+
+                    <div class="status" id="status"></div>
+
+                    <div class="input-group">
+                        <label>Source Name (optional)</label>
+                        <input type="text" id="sourceName" placeholder="e.g., Cars.com, AutoTrader...">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Mode</label>
+                        <select id="scrapeMode" onchange="toggleScrapeMode()">
+                            <option value="single">Single URL</option>
+                            <option value="batch">Batch Multiple URLs</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label id="curlLabel">Paste curl command</label>
+                        <textarea id="curlInput" placeholder="Paste your curl command here...
+
+Example:
+curl 'https://www.example.com/inventory/12345' \
+  -H 'User-Agent: Mozilla/5.0...' \
+  -H 'Cookie: session=...'"></textarea>
+                    </div>
+
+                    <button class="btn btn-primary" id="scrapeBtn" style="width: 100%;" onclick="scrape()">
+                        Scrape & Add to Database
+                    </button>
+
+                    <div id="batchProgress" class="progress-container" style="display: none;">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <div class="progress-text" id="progressText">Processing...</div>
+                        <div class="batch-results" id="batchResults"></div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <span>Quick Actions</span>
+                    </div>
+
+                    <div style="display: grid; gap: 10px; margin-bottom: 20px;">
+                        <button class="btn btn-secondary" onclick="checkDuplicates()">
+                            🔍 Check for Duplicate VINs
+                        </button>
+                        <button class="btn btn-secondary" onclick="cleanupDuplicates()">
+                            🧹 Auto-Cleanup Duplicates
+                        </button>
+                        <button class="btn btn-secondary" onclick="loadInventory()">
+                            🔄 Refresh Inventory
+                        </button>
+                    </div>
+
+                    <div class="panel-header">Recent Sources</div>
+                    <ul id="recentSources" class="sources-list"></ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventory Tab -->
+        <div id="inventory-tab" class="tab-content">
+            <div class="panel">
+                <div class="toolbar">
+                    <div class="toolbar-left">
+                        <div class="search-box">
+                            <input type="text" id="searchInput" placeholder="Search by make, model, VIN..." oninput="filterInventory()">
+                        </div>
+                        <select id="qualityFilter" onchange="filterInventory()">
+                            <option value="">All Quality</option>
+                            <option value="high">High (80%+)</option>
+                            <option value="medium">Medium (50-79%)</option>
+                            <option value="low">Low (&lt;50%)</option>
+                        </select>
+                        <select id="sourceFilter" onchange="filterInventory()">
+                            <option value="">All Sources</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button class="btn btn-secondary btn-sm" onclick="exportCSV()">Export CSV</button>
+                        <button class="btn btn-secondary btn-sm" onclick="exportJSON()">Export JSON</button>
+                        <button class="btn btn-danger btn-sm" onclick="clearAll()">Clear All</button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Quality</th>
+                                <th>Year</th>
+                                <th>Make</th>
+                                <th>Model</th>
+                                <th>Price</th>
+                                <th>Mileage</th>
+                                <th>Source</th>
+                                <th>VIN</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="panel" id="detailPanel" style="display: none; margin-top: 20px;">
+                <div class="panel-header">
+                    <span>Vehicle Details</span>
+                    <button class="btn btn-secondary btn-sm" onclick="closeDetail()">Close</button>
+                </div>
+                <div id="carDetail"></div>
+            </div>
+        </div>
+
+        <!-- Analytics Tab -->
+        <div id="analytics-tab" class="tab-content">
+            <div class="analytics-grid">
+                <div class="analytics-card">
+                    <div class="panel-header">Data Quality Overview</div>
+                    <div class="detail-grid" style="margin-top: 15px;">
+                        <div class="detail-item">
+                            <span class="detail-label">Total Records</span>
+                            <span class="detail-value" id="statTotal">0</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">With VIN</span>
+                            <span class="detail-value" id="statVin">0</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">With Price</span>
+                            <span class="detail-value" id="statPrice">0</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">With Mileage</span>
+                            <span class="detail-value" id="statMileage">0</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Avg Price</span>
+                            <span class="detail-value price" id="statAvgPrice">$0</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Avg Mileage</span>
+                            <span class="detail-value" id="statAvgMileage">0 mi</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="analytics-card">
+                    <div class="panel-header">Data Sources</div>
+                    <ul class="sources-list" id="sourcesList"></ul>
+                </div>
+
+                <div class="analytics-card">
+                    <div class="panel-header">Duplicate VINs</div>
+                    <div id="duplicatesInfo">
+                        <button class="btn btn-secondary" onclick="checkDuplicates()">Check Duplicates</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="analytics-card" style="margin-top: 20px;">
+                <div class="panel-header">Price Distribution</div>
+                <div class="chart-placeholder">📊 Price chart visualization coming soon</div>
+            </div>
+
+            <div class="analytics-card" style="margin-top: 20px;">
+                <div class="panel-header">Make/Model Distribution</div>
+                <div class="chart-placeholder">📊 Make/Model chart visualization coming soon</div>
+            </div>
+        </div>
+
+        <!-- Test API Tab -->
+        <div id="test-tab" class="tab-content">
+            <div class="panel" style="margin-bottom: 20px;">
+                <div class="panel-header">Test Scraper</div>
+                <p style="color: #888; margin-bottom: 15px;">Test a curl command without saving to database</p>
+
+                <div class="input-group">
+                    <label>Source Name (optional)</label>
+                    <input type="text" id="testSourceName" placeholder="e.g., Test">
+                </div>
+
+                <div class="input-group">
+                    <label>Paste curl command</label>
+                    <textarea id="testCurlInput" style="height: 100px;" placeholder="Paste curl command to test..."></textarea>
+                </div>
+
+                <button class="btn btn-secondary" onclick="testScrape()">Test Extract</button>
+            </div>
+
+            <div class="panel" id="testOutput" style="display: none;">
+                <div class="panel-header">Test Results</div>
+                <div id="testResults"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let inventory = [];
+        let selectedCarId = null;
+
+        // Initialize
+        loadInventory();
+        loadStats();
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            event.target.classList.add('active');
+            document.getElementById(tabName + '-tab').classList.add('active');
+
+            if (tabName === 'analytics') {
+                loadStats();
+            }
+        }
+
+        function toggleScrapeMode() {
+            const mode = document.getElementById('scrapeMode').value;
+            const label = document.getElementById('curlLabel');
+            const placeholder = document.getElementById('curlInput');
+
+            if (mode === 'batch') {
+                label.textContent = 'Paste multiple curl commands (one per line)';
+                placeholder.placeholder = 'Paste curl commands...\n\ncurl "url1" ...\ncurl "url2" ...\ncurl "url3" ...';
+            } else {
+                label.textContent = 'Paste curl command';
+                placeholder.placeholder = 'Paste your curl command here...\n\ncurl \'https://www.example.com/inventory/12345\' ...';
+            }
+        }
+
+        async function loadInventory() {
+            try {
+                const response = await fetch('/api/inventory');
+                inventory = await response.json();
+                updateStats();
+                renderInventory();
+                updateSourceFilter();
+            } catch (error) {
+                console.error('Failed to load inventory:', error);
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const stats = await response.json();
+
+                document.getElementById('statTotal').textContent = stats.quality?.total || 0;
+                document.getElementById('statVin').textContent = stats.quality?.has_vin || 0;
+                document.getElementById('statPrice').textContent = stats.quality?.has_price || 0;
+                document.getElementById('statMileage').textContent = stats.quality?.has_mileage || 0;
+                document.getElementById('statAvgPrice').textContent = stats.quality?.avg_price
+                    ? '$' + Math.round(stats.quality.avg_price).toLocaleString()
+                    : '$0';
+                document.getElementById('statAvgMileage').textContent = stats.quality?.avg_mileage
+                    ? Math.round(stats.quality.avg_mileage).toLocaleString() + ' mi'
+                    : '0 mi';
+
+                // Sources list
+                const sourcesList = document.getElementById('sourcesList');
+                const recentSources = document.getElementById('recentSources');
+                sourcesList.innerHTML = '';
+                recentSources.innerHTML = '';
+
+                if (stats.sources && stats.sources.length > 0) {
+                    stats.sources.forEach(source => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `
+                            <span>${source.source}</span>
+                            <span class="source-count">${source.count}</span>
+                        `;
+                        sourcesList.appendChild(li);
+
+                        if (recentSources.children.length < 5) {
+                            const recentLi = li.cloneNode(true);
+                            recentSources.appendChild(recentLi);
+                        }
+                    });
+                } else {
+                    sourcesList.innerHTML = '<li style="color: #888;">No sources yet</li>';
+                    recentSources.innerHTML = '<li style="color: #888;">No sources yet</li>';
+                }
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+            }
+        }
+
+        async function scrape() {
+            const mode = document.getElementById('scrapeMode').value;
+            const sourceName = document.getElementById('sourceName').value.trim() || 'unknown';
+            const curlInput = document.getElementById('curlInput').value.trim();
+            const status = document.getElementById('status');
+            const btn = document.getElementById('scrapeBtn');
+            const batchProgress = document.getElementById('batchProgress');
+
+            if (!curlInput) {
+                showStatus('Please enter curl command(s)', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+
+            if (mode === 'batch') {
+                // Batch scraping
+                const curlCommands = curlInput.split('\n').filter(cmd => cmd.trim());
+                batchProgress.style.display = 'block';
+                document.getElementById('progressFill').style.width = '0%';
+                document.getElementById('progressText').textContent = `Processing 0/${curlCommands.length}...`;
+                document.getElementById('batchResults').innerHTML = '';
+
+                try {
+                    const response = await fetch('/api/scrape/batch', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ curlCommands, sourceName })
+                    });
+
+                    const result = await response.json();
+
+                    batchProgress.style.display = 'none';
+                    document.getElementById('curlInput').value = '';
+                    document.getElementById('sourceName').value = '';
+
+                    if (result.success) {
+                        showStatus(result.message, 'success');
+                        await loadInventory();
+                        await loadStats();
+                    } else {
+                        showStatus(result.message, 'error');
+                    }
+                } catch (error) {
+                    batchProgress.style.display = 'none';
+                    showStatus('Failed to scrape: ' + error.message, 'error');
+                }
+            } else {
+                // Single scraping
+                btn.innerHTML = '<span class="loading"></span> Scraping...';
+
+                try {
+                    const response = await fetch('/api/scrape', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ curlCommand: curlInput, sourceName })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        showStatus(result.message, 'success');
+                        document.getElementById('curlInput').value = '';
+                        document.getElementById('sourceName').value = '';
+                        await loadInventory();
+                    } else {
+                        showStatus(result.message, 'error');
+                    }
+                } catch (error) {
+                    showStatus('Failed to scrape: ' + error.message, 'error');
+                } finally {
+                    btn.innerHTML = 'Scrape & Add to Database';
+                }
+            }
+
+            btn.disabled = false;
+        }
+
+        async function testScrape() {
+            const curlInput = document.getElementById('testCurlInput').value.trim();
+            const sourceName = document.getElementById('testSourceName').value.trim() || 'test';
+            const output = document.getElementById('testOutput');
+            const results = document.getElementById('testResults');
+
+            if (!curlInput) {
+                alert('Please enter a curl command');
+                return;
+            }
+
+            results.innerHTML = '<div style="text-align: center; padding: 20px;"><span class="loading"></span> Testing...</div>';
+            output.style.display = 'block';
+
+            try {
+                const response = await fetch('/api/test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ curlCommand: curlInput, sourceName })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    let html = `<div style="margin-bottom: 15px;"><span style="color: #00d4aa;">✅</span> Successfully extracted ${result.data.length} car(s) from ${result.url}</div>`;
+
+                    result.data.forEach((car, index) => {
+                        html += `
+                            <div class="test-car">
+                                <div class="test-car-header">
+                                    <strong>Car #${index + 1}</strong>
+                                    <div>Quality Score: <span style="color: ${car._qualityScore >= 80 ? '#00d4aa' : car._qualityScore >= 50 ? '#ffaa00' : '#ff4444'};">${car._qualityScore}%</span></div>
+                                </div>
+                                <div class="test-car-details">
+                                    ${renderTestDetail('Year', car.year)}
+                                    ${renderTestDetail('Make', car.make)}
+                                    ${renderTestDetail('Model', car.model)}
+                                    ${renderTestDetail('Price', car.price ? '$' + car.price.toLocaleString() : null)}
+                                    ${renderTestDetail('Mileage', car.mileage ? car.mileage.toLocaleString() + ' mi' : null)}
+                                    ${renderTestDetail('VIN', car.vin)}
+                                </div>
+                                ${car._qualityFlags && car._qualityFlags.length > 0 ? `
+                                    <div style="margin-top: 10px;">
+                                        ${car._qualityFlags.map(flag => `<div class="flag ${flag.type}">⚠️ ${flag.message}</div>`).join('')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `;
+                    });
+
+                    results.innerHTML = html;
+                } else {
+                    results.innerHTML = `<div style="color: #ff4444;">❌ ${result.message}</div>`;
+                }
+            } catch (error) {
+                results.innerHTML = `<div style="color: #ff4444;">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        function renderTestDetail(label, value) {
+            if (!value) return '<div class="test-car-detail"><label style="opacity: 0.5;">' + label + ':</label><span style="opacity: 0.5;">-</span></div>';
+            return '<div class="test-car-detail"><label>' + label + ':</label><span>' + value + '</span></div>';
+        }
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = 'status ' + type;
+            status.style.display = 'block';
+
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 5000);
+        }
+
+        function updateStats() {
+            document.getElementById('totalCars').textContent = inventory.length;
+
+            const sources = new Set(inventory.map(car => car.source));
+            document.getElementById('totalSources').textContent = sources.size;
+
+            const carsWithPrice = inventory.filter(car => car.price);
+            if (carsWithPrice.length > 0) {
+                const avgPrice = carsWithPrice.reduce((sum, car) => sum + car.price, 0) / carsWithPrice.length;
+                document.getElementById('avgPrice').textContent = '$' + avgPrice.toLocaleString(undefined, {
+                    maximumFractionDigits: 0
+                });
+            }
+
+            const carsWithQuality = inventory.filter(car => car._qualityScore);
+            if (carsWithQuality.length > 0) {
+                const avgQuality = carsWithQuality.reduce((sum, car) => sum + car._qualityScore, 0) / carsWithQuality.length;
+                document.getElementById('avgQuality').textContent = Math.round(avgQuality) + '%';
+            }
+        }
+
+        function updateSourceFilter() {
+            const sources = new Set(inventory.map(car => car.source));
+            const select = document.getElementById('sourceFilter');
+            const currentValue = select.value;
+
+            select.innerHTML = '<option value="">All Sources</option>';
+            sources.forEach(source => {
+                const option = document.createElement('option');
+                option.value = source;
+                option.textContent = source || 'Unknown';
+                select.appendChild(option);
+            });
+
+            select.value = currentValue;
+        }
+
+        function renderInventory() {
+            const tbody = document.getElementById('inventoryBody');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const qualityFilter = document.getElementById('qualityFilter').value;
+            const sourceFilter = document.getElementById('sourceFilter').value;
+
+            const filtered = inventory.filter(car => {
+                const searchStr = [car.make, car.model, car.vin, car.source].join(' ').toLowerCase();
+                const matchesSearch = searchStr.includes(searchTerm);
+
+                let matchesQuality = true;
+                if (qualityFilter) {
+                    const score = car._qualityScore || 0;
+                    if (qualityFilter === 'high' && score < 80) matchesQuality = false;
+                    if (qualityFilter === 'medium' && (score < 50 || score >= 80)) matchesQuality = false;
+                    if (qualityFilter === 'low' && score >= 50) matchesQuality = false;
+                }
+
+                let matchesSource = true;
+                if (sourceFilter && car.source !== sourceFilter) matchesSource = false;
+
+                return matchesSearch && matchesQuality && matchesSource;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="empty-state">
+                            ${inventory.length === 0
+                                ? 'No cars in database yet. Add a curl command to start scraping!'
+                                : 'No matches found for your search.'}
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(car => {
+                const qualityClass = (car._qualityScore || 0) >= 80 ? 'quality-high' : (car._qualityScore || 0) >= 50 ? 'quality-medium' : 'quality-low';
+
+                return `
+                    <tr onclick="showDetail(${car.id})">
+                        <td>
+                            <div class="quality-score">
+                                <div class="quality-score-bar ${qualityClass}" style="width: ${car._qualityScore || 0}%"></div>
+                            </div>
+                            <span style="font-size: 11px; color: #888;">${car._qualityScore || 0}%</span>
+                        </td>
+                        <td class="year">${car.year || '-'}</td>
+                        <td>${car.make || '-'}</td>
+                        <td>${car.model || ''}${car.trim ? ' ' + car.trim : ''}</td>
+                        <td class="price">${car.price ? '$' + car.price.toLocaleString() : '-'}</td>
+                        <td>${car.mileage ? car.mileage.toLocaleString() + ' mi' : '-'}</td>
+                        <td>
+                            ${car.source || '-'}
+                            ${car._duplicateVin ? '<span class="badge badge-duplicate">DUP</span>' : ''}
+                        </td>
+                        <td>${car.vin ? `<span class="vin">${car.vin}</span>` : '-'}</td>
+                        <td>
+                            <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); deleteCar(${car.id})">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function filterInventory() {
+            renderInventory();
+        }
+
+        function showDetail(id) {
+            const car = inventory.find(c => c.id === id);
+            if (!car) return;
+
+            selectedCarId = id;
+            const detailPanel = document.getElementById('detailPanel');
+            const carDetail = document.getElementById('carDetail');
+
+            const qualityClass = (car._qualityScore || 0) >= 80 ? '#00d4aa' : (car._qualityScore || 0) >= 50 ? '#ffaa00' : '#ff4444';
+
+            carDetail.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #333;">
+                    <div>
+                        <h2 style="color: #fff;">${[car.year, car.make, car.model, car.trim].filter(Boolean).join(' ') || 'Unknown'}</h2>
+                        <span class="badge" style="background: #1a1a1a; margin-top: 10px; display: inline-block;">${car.source || 'Unknown Source'}</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 24px; font-weight: bold; color: ${qualityClass};">${car._qualityScore || 0}%</div>
+                        <div style="color: #888; font-size: 12px;">Quality Score</div>
+                    </div>
+                </div>
+
+                ${car._qualityFlags && car._qualityFlags.length > 0 ? `
+                    <div class="quality-flags">
+                        <div style="margin-bottom: 10px; font-weight: bold;">Quality Flags</div>
+                        ${car._qualityFlags.map(flag => `<div class="flag ${flag.type}">${flag.type === 'error' ? '❌' : flag.type === 'warning' ? '⚠️' : 'ℹ️'} ${flag.message}</div>`).join('')}
+                    </div>
+                ` : ''}
+
+                <div class="detail-grid" style="margin-top: 20px;">
+                    <div class="detail-item">
+                        <span class="detail-label">Price</span>
+                        <span class="detail-value price">${car.price ? '$' + car.price.toLocaleString() : 'Not listed'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Mileage</span>
+                        <span class="detail-value">${car.mileage ? car.mileage.toLocaleString() + ' mi' : 'Unknown'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">VIN</span>
+                        <span class="detail-value ${car.vin ? 'vin' : ''}">${car.vin || 'Unknown'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Stock Number</span>
+                        <span class="detail-value">${car.stock_number || '-'}</span>
+                    </div>
+                </div>
+
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="detail-label">Body Type</span>
+                        <span class="detail-value">${car.body_type || '-'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Transmission</span>
+                        <span class="detail-value">${car.transmission || '-'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Drivetrain</span>
+                        <span class="detail-value">${car.drivetrain || '-'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Fuel Type</span>
+                        <span class="detail-value">${car.fuel_type || '-'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Engine</span>
+                        <span class="detail-value">${car.engine || '-'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Exterior Color</span>
+                        <span class="detail-value">${car.exterior_color || '-'}</span>
+                    </div>
+                </div>
+
+                ${car.description ? `
+                    <div style="margin-top: 20px; padding: 15px; background: #0f0f0f; border-radius: 4px;">
+                        <div style="margin-bottom: 10px; color: #888;">Description</div>
+                        <div style="line-height: 1.6;">${car.description}</div>
+                    </div>
+                ` : ''}
+
+                ${car.dealer_name ? `
+                    <div class="detail-grid" style="margin-top: 20px; padding: 15px; background: #0f0f0f; border-radius: 4px;">
+                        <div class="detail-item">
+                            <span class="detail-label">Dealer</span>
+                            <span class="detail-value">${car.dealer_name}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Phone</span>
+                            <span class="detail-value">${car.dealer_phone || '-'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Address</span>
+                            <span class="detail-value">${car.dealer_address || '-'}</span>
+                        </div>
+                    </div>
+                ` : ''}
+
+                ${car.features && car.features.length > 0 ? `
+                    <div style="margin-top: 20px;">
+                        <div style="margin-bottom: 10px; color: #888;">Features (${car.features.length})</div>
+                        <div class="features-list">
+                            ${car.features.map(f => `<span class="feature-tag">${f}</span>`).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+
+                ${car.images && car.images.length > 0 ? `
+                    <div style="margin-top: 20px;">
+                        <div style="margin-bottom: 10px; color: #888;">Images (${car.images.length})</div>
+                        <div class="images-grid">
+                            ${car.images.map(img => `<img src="${img}" alt="Vehicle image" onerror="this.style.display='none'">`).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+
+                <div style="margin-top: 20px;">
+                    ${car.url ? `<a href="${car.url}" target="_blank" class="btn btn-secondary btn-sm">View Original Listing</a>` : ''}
+                </div>
+            `;
+
+            detailPanel.style.display = 'block';
+            detailPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function closeDetail() {
+            document.getElementById('detailPanel').style.display = 'none';
+            selectedCarId = null;
+        }
+
+        async function deleteCar(id) {
+            if (!confirm('Delete this car from the database?')) return;
+
+            try {
+                await fetch(`/api/inventory/${id}`, { method: 'DELETE' });
+                await loadInventory();
+                await loadStats();
+
+                if (selectedCarId === id) {
+                    closeDetail();
+                }
+            } catch (error) {
+                alert('Failed to delete: ' + error.message);
+            }
+        }
+
+        async function clearAll() {
+            if (!confirm('Are you sure you want to delete ALL cars from the database? This cannot be undone!')) return;
+
+            try {
+                await fetch('/api/inventory', { method: 'DELETE' });
+                await loadInventory();
+                await loadStats();
+                closeDetail();
+            } catch (error) {
+                alert('Failed to clear inventory: ' + error.message);
+            }
+        }
+
+        async function checkDuplicates() {
+            try {
+                const response = await fetch('/api/stats/duplicates');
+                const result = await response.json();
+
+                if (result.duplicates.length === 0) {
+                    alert('✅ No duplicate VINs found!');
+                } else {
+                    alert(`⚠️ Found ${result.duplicates.length} duplicate VIN group(s):\n\n` +
+                        result.duplicates.slice(0, 5).map(d => `- ${d.vin} (${d.count} copies)`).join('\n') +
+                        (result.duplicates.length > 5 ? `\n...and ${result.duplicates.length - 5} more` : ''));
+                }
+            } catch (error) {
+                alert('Error checking duplicates: ' + error.message);
+            }
+        }
+
+        async function cleanupDuplicates() {
+            if (!confirm('Auto-cleanup will delete the oldest duplicate entries for each VIN. Continue?')) return;
+
+            try {
+                const response = await fetch('/api/inventory/duplicates', { method: 'DELETE' });
+                const result = await response.json();
+
+                alert(result.message);
+                await loadInventory();
+                await loadStats();
+            } catch (error) {
+                alert('Error cleaning up duplicates: ' + error.message);
+            }
+        }
+
+        function exportCSV() {
+            if (inventory.length === 0) {
+                alert('No cars to export!');
+                return;
+            }
+
+            const headers = [
+                'ID', 'Source', 'Scraped At', 'VIN', 'Year', 'Make', 'Model', 'Trim',
+                'Price', 'Mileage', 'Exterior Color', 'Interior Color', 'Body Type',
+                'Transmission', 'Drivetrain', 'Fuel Type', 'Engine', 'HP',
+                'MPG City', 'MPG Highway', 'Stock Number', 'Dealer Name', 'Dealer Phone',
+                'Dealer Address', 'URL', 'Quality Score'
+            ];
+
+            const rows = inventory.map(car => [
+                car.id,
+                car.source,
+                car.scraped_at,
+                car.vin,
+                car.year,
+                car.make,
+                car.model,
+                car.trim,
+                car.price,
+                car.mileage,
+                car.exterior_color,
+                car.interior_color,
+                car.body_type,
+                car.transmission,
+                car.drivetrain,
+                car.fuel_type,
+                car.engine,
+                car.horsepower,
+                car.mpg_city,
+                car.mpg_highway,
+                car.stock_number,
+                car.dealer_name,
+                car.dealer_phone,
+                car.dealer_address,
+                car.url,
+                car._qualityScore
+            ]);
+
+            const csv = [headers.join(','), ...rows.map(row => row.map(cell => `"${cell || ''}"`).join(','))].join('\n');
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `car_inventory_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function exportJSON() {
+            if (inventory.length === 0) {
+                alert('No cars to export!');
+                return;
+            }
+
+            const json = JSON.stringify(inventory, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `car_inventory_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

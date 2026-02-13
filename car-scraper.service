@@ -1,0 +1,14 @@
+[Unit]
+Description=Car Scraper Dashboard
+After=network.target
+
+[Service]
+Type=simple
+User=alex
+WorkingDirectory=/home/alex/.openclaw/workspace/car-scraper
+ExecStart=/usr/bin/node /home/alex/.openclaw/workspace/car-scraper/server.js
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
