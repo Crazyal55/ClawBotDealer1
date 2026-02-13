@@ -1,0 +1,277 @@
+import { BaseRepository } from './base.repository';
+import { Vehicle, VehicleInput, VehicleFilter, VehicleSearchResult } from '../models/vehicle.model';
+import { PoolClient } from 'pg';
+
+export class InventoryRepository extends BaseRepository {
+  constructor(pool: Pool) {
+    super(pool);
+  }
+
+  async create(data: VehicleInput, dealershipId: string): Promise<Vehicle> {
+    const query = `
+      INSERT INTO vehicles (
+        vin, make, model, year, trim, price, mileage, stock_number,
+        body_type, transmission, drivetrain, fuel_type,
+        exterior_color, interior_color, features, images, description,
+        dealer_name, dealer_address, dealer_phone, source, url,
+        dealership_id, scraped_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
+      RETURNING id, vin, make, model, year, trim, price, mileage, stock_number,
+        body_type, transmission, drivetrain, fuel_type,
+        exterior_color, interior_color, features, images, description,
+        dealer_name, dealer_address, dealer_phone, source, url,
+        dealership_id, scraped_at, quality_score, quality_flags
+    `;
+
+    const params = [
+      data.vin,
+      data.make,
+      data.model,
+      data.year,
+      data.trim || null,
+      data.price,
+      data.mileage || null,
+      data.stockNumber || null,
+      data.bodyType || null,
+      data.transmission || null,
+      data.drivetrain || null,
+      data.fuelType || null,
+      data.exteriorColor || null,
+      data.interiorColor || null,
+      JSON.stringify(data.features || []),
+      JSON.stringify(data.images || []),
+      data.description || null,
+      data.dealerName || null,
+      data.dealerAddress || null,
+      data.dealerPhone || null,
+      data.source || 'unknown',
+      data.url || null,
+      dealershipId,
+      new Date()
+    ];
+
+    const result = await this.query<Vehicle>(query, params);
+    
+    return this.mapEntity(result.rows[0]);
+  }
+
+  async findById(id: number, dealershipId: string): Promise<Vehicle | null> {
+    const query = `
+      SELECT * FROM vehicles 
+      WHERE id = $1 AND dealership_id = $2 AND deleted_at IS NULL
+    `;
+    
+    const result = await this.query<Vehicle>(query, [id, dealershipId]);
+    return result.rows.length > 0 ? this.mapEntity(result.rows[0]) : null;
+  }
+
+  async findByVIN(vin: string, dealershipId: string): Promise<Vehicle | null> {
+    const query = `
+      SELECT * FROM vehicles 
+      WHERE vin = $1 AND dealership_id = $2 AND deleted_at IS NULL
+      ORDER BY scraped_at DESC
+      LIMIT 1
+    `;
+    
+    const result = await this.query<Vehicle>(query, [vin, dealershipId]);
+    return result.rows.length > 0 ? this.mapEntity(result.rows[0]) : null;
+  }
+
+  async search(filters: VehicleFilter, dealershipId: string): Promise<VehicleSearchResult> {
+    let query = 'SELECT * FROM vehicles WHERE dealership_id = $1 AND deleted_at IS NULL';
+    const params: any[] = [dealershipId];
+    let paramCount = 2;
+
+    // Build WHERE clause dynamically
+    if (filters.make) {
+      query += ` AND make = $${++paramCount}`;
+      params.push(filters.make);
+    }
+
+    if (filters.model) {
+      query += ` AND LOWER(model) LIKE LOWER($${++paramCount})`;
+      params.push(`%${filters.model}%`);
+    }
+
+    if (filters.minYear) {
+      query += ` AND year >= $${++paramCount}`;
+      params.push(filters.minYear);
+    }
+
+    if (filters.maxYear) {
+      query += ` AND year <= $${++paramCount}`;
+      params.push(filters.maxYear);
+    }
+
+    if (filters.minPrice) {
+      query += ` AND price >= $${++paramCount}`;
+      params.push(filters.minPrice);
+    }
+
+    if (filters.maxPrice) {
+      query += ` AND price <= $${++paramCount}`;
+      params.push(filters.maxPrice);
+    }
+
+    if (filters.source) {
+      query += ` AND source = $${++paramCount}`;
+      params.push(filters.source);
+    }
+
+    // Add pagination
+    query += ` ORDER BY scraped_at DESC LIMIT $${++paramCount} OFFSET $${++paramCount}`;
+    params.push(filters.limit || 50);
+    params.push(filters.offset || 0);
+
+    const result = await this.query<{ count: 'COUNT(*)' }>(`SELECT COUNT(*) as count FROM (${query})`, params);
+    const total = parseInt(result.rows[0].count);
+
+    const vehiclesResult = await this.query<Vehicle>(query, params);
+
+    return {
+      vehicles: vehiclesResult.rows.map(row => this.mapEntity(row)),
+      total,
+      filters
+    };
+  }
+
+  async update(id: number, data: VehicleUpdate, dealershipId: string): Promise<Vehicle> {
+    const updates: string[] = [];
+    const values: any[] = [];
+    let paramCount = 1;
+
+    values.push(id);
+    values.push(dealershipId);
+
+    if (data.price !== undefined) {
+      updates.push(`price = $${++paramCount}`);
+      values.push(data.price);
+    }
+
+    if (data.mileage !== undefined) {
+      updates.push(`mileage = $${++paramCount}`);
+      values.push(data.mileage);
+    }
+
+    if (data.description !== undefined) {
+      updates.push(`description = $${++paramCount}`);
+      values.push(data.description);
+    }
+
+    if (data.images !== undefined) {
+      updates.push(`images = $${++paramCount}`);
+      values.push(JSON.stringify(data.images));
+    }
+
+    if (data.features !== undefined) {
+      updates.push(`features = $${++paramCount}`);
+      values.push(JSON.stringify(data.features));
+    }
+
+    if (updates.length === 0) {
+      throw new Error('No fields to update');
+    }
+
+    const setClause = updates.join(', ');
+    const query = `
+      UPDATE vehicles 
+      SET ${setClause}, updated_at = NOW()
+      WHERE id = $1 AND dealership_id = $2 AND deleted_at IS NULL
+      RETURNING *
+    `;
+
+    const result = await this.query<Vehicle>(query, values);
+    return this.mapEntity(result.rows[0]);
+  }
+
+  async softDelete(id: number, dealershipId: string): Promise<void> {
+    const query = `
+      UPDATE vehicles 
+      SET deleted_at = NOW()
+      WHERE id = $1 AND dealership_id = $2
+    `;
+
+    await this.query(query, [id, dealershipId]);
+  }
+
+  async softDeleteByVIN(vin: string, dealershipId: string): Promise<number> {
+    const query = `
+      UPDATE vehicles 
+      SET deleted_at = NOW()
+      WHERE vin = $1 AND dealership_id = $2
+    `;
+
+    const result = await this.query<{ count: string }>(query, [vin, dealershipId]);
+    return parseInt(result.rows[0].count);
+  }
+
+  async getStats(dealershipId: string): Promise<{
+    total: number;
+    avgPrice: number;
+    avgMileage: number;
+    makeDistribution: { make: string; count: number }[];
+  }> {
+    const query = `
+      SELECT 
+        COUNT(*) as total,
+        AVG(price) as avg_price,
+        AVG(mileage) as avg_mileage
+      FROM vehicles 
+      WHERE dealership_id = $1 AND deleted_at IS NULL
+    `;
+
+    const statsResult = await this.query(query, [dealershipId]);
+    const stats = statsResult.rows[0];
+
+    const makeQuery = `
+      SELECT make, COUNT(*) as count
+      FROM vehicles 
+      WHERE dealership_id = $1 AND deleted_at IS NULL
+      GROUP BY make
+      ORDER BY count DESC
+      LIMIT 10
+    `;
+
+    const makeResult = await this.query(makeQuery, [dealershipId]);
+
+    return {
+      total: parseInt(stats.avg_price ? stats.total : 0),
+      avgPrice: stats.avg_price ? parseFloat(stats.avg_price) : 0,
+      avgMileage: stats.avg_mileage ? Math.round(stats.avg_mileage) : 0,
+      makeDistribution: makeResult.rows
+    };
+  }
+
+  private mapEntity(row: any): Vehicle {
+    return {
+      id: row.id,
+      vin: row.vin,
+      year: row.year,
+      make: row.make,
+      model: row.model,
+      trim: row.trim,
+      price: parseFloat(row.price),
+      mileage: row.mileage ? parseInt(row.mileage) : null,
+      stockNumber: row.stock_number,
+      bodyType: row.body_type,
+      transmission: row.transmission,
+      drivetrain: row.drivetrain,
+      fuelType: row.fuel_type,
+      exteriorColor: row.exterior_color,
+      interiorColor: row.interior_color,
+      features: row.features ? JSON.parse(row.features) : [],
+      images: row.images ? JSON.parse(row.images) : [],
+      description: row.description,
+      dealerName: row.dealer_name,
+      dealerAddress: row.dealer_address,
+      dealerPhone: row.dealer_phone,
+      source: row.source,
+      url: row.url,
+      qualityScore: row.quality_score,
+      qualityFlags: row.quality_flags ? JSON.parse(row.quality_flags) : [],
+      scrapedAt: row.scraped_at,
+      dealershipId: row.dealership_id,
+      embeddingId: row.embedding_id
+    };
+  }
+}
