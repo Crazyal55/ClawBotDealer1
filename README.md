@@ -68,6 +68,12 @@ Notes:
 - Progress tracker: `docs/PROGRESS_UPDATE.md`
 - Azure cloud setup runbook: `docs/AZURE_SETUP.md`
 
+## Production Readiness Files
+
+- `Dockerfile` - production container image for Azure Web App
+- `.env.production.example` - production env template (no secrets committed)
+- `.github/workflows/azure-webapp.yaml` - CI/CD workflow (type-check + smoke + deploy)
+
 ## Current Architecture
 
 - `server.js` - active JS/SQLite API runtime
@@ -93,3 +99,4 @@ Notes:
 
 - `server_pg.js` and TS/Postgres files remain in the repo for future migration work.
 - If you switch active runtime later, update `package.json` scripts and this README together.
+- Security defaults now include `helmet`, API rate limiting, and CORS origin allowlisting via `CORS_ORIGINS`.

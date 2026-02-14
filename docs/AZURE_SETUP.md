@@ -152,13 +152,11 @@ az webapp config appsettings set \
 ## 7) Deploy from GitHub
 
 Option A: Local push via App Service deployment center  
-Option B: GitHub Actions (recommended)
+Option B: GitHub Actions (recommended, already scaffolded in `.github/workflows/azure-webapp.yaml`)
 
-Minimal GitHub Actions plan:
-- Install Node
-- `npm ci`
-- `npm run type-check`
-- Deploy to App Service
+GitHub Actions secrets required:
+- `AZURE_WEBAPP_NAME`
+- `AZURE_WEBAPP_PUBLISH_PROFILE`
 
 If desired, add deployment slot (`staging`) before production swap.
 
@@ -239,7 +237,8 @@ Required for PostgreSQL runtime:
 
 Optional:
 
-- `CORS_ORIGIN`
+- `CORS_ORIGINS` (comma-separated allowlist)
+- `RATE_LIMIT_MAX`
 - future chatbot/model keys (prefer Key Vault references)
 
 ---
@@ -256,4 +255,3 @@ Optional:
    - `/api/health`
    - `/api/dealerships/overview`
    - `/api/inventory`
-
