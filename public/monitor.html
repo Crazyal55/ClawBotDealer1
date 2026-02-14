@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dealer Dev Ops - Monitoring Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-app: #F7F7F7;
+            --bg-elevated: #FFFFFF;
+            --bg-card: #FFFFFF;
+            --text-primary: #2D3434;
+            --text-secondary: #5A5A5A;
+            --text-muted: #6B7280;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --error: #EF4444;
+            --info: #6366F1;
+            --border-color: #DEE2E6;
+
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
+
+            --radius-sm: 6px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-app);
+            color: var(--text-primary);
+            display: flex;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Header */
+        .dashboard-header {
+            background: var(--bg-elevated);
+            border-bottom: 1px solid var(--border-color);
+            padding: var(--spacing-md) var(--spacing-lg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dashboard-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .dashboard-meta {
+            display: flex;
+            gap: var(--spacing-md);
+            align-items: center;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .meta-badge {
+            padding: 4px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .meta-badge.success {
+            background: var(--success);
+            color: white;
+        }
+
+        .meta-badge.warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .refresh-btn {
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: var(--bg-app);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .refresh-btn:hover {
+            background: var(--bg-elevated);
+            transform: translateY(-1px);
+        }
+
+        /* Main Content */
+        .dashboard-content {
+            flex: 1;
+            padding: var(--spacing-lg);
+            gap: var(--spacing-lg);
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .dashboard-sidebar {
+            width: 280px;
+            background: var(--bg-elevated);
+            border-right: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+
+        .sidebar-section {
+            padding: var(--spacing-md);
+        }
+
+        .sidebar-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .metric-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .metric-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .metric-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .metric-trend {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+        }
+
+        .metric-trend.up {
+            background: #E6F4EA;
+            color: var(--success);
+        }
+
+        .metric-trend.down {
+            background: #FEE2E2;
+            color: var(--error);
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: var(--bg-app);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--info);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        /* Main Dashboard */
+        .dashboard-main {
+            flex: 1;
+            overflow-y: auto;
+            gap: var(--spacing-lg);
+        }
+
+        /* Status Cards Grid */
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .status-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-lg);
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+
+        .status-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .status-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-badge.operational {
+            background: var(--success);
+            color: white;
+        }
+
+        .status-badge.degraded {
+            background: var(--warning);
+            color: white;
+        }
+
+        .status-badge.down {
+            background: var(--error);
+            color: white;
+        }
+
+        .status-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--spacing-md);
+        }
+
+        .status-metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-sm) 0;
+        }
+
+        .status-metric-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .status-metric-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Charts Section */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-lg);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .chart-period {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        .period-btn {
+            padding: 4px 12px;
+            background: var(--bg-app);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .period-btn.active {
+            background: var(--info);
+            color: white;
+            border-color: var(--info);
+        }
+
+        .chart-canvas-container {
+            position: relative;
+            height: 300px;
+        }
+
+        /* Recent Events Table */
+        .events-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-lg);
+        }
+
+        .events-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .events-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .events-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .events-table th,
+        .events-table td {
+            text-align: left;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 13px;
+        }
+
+        .events-table th {
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+
+        .events-table td {
+            color: var(--text-primary);
+        }
+
+        .events-table tr:hover td {
+            background: var(--bg-app);
+        }
+
+        .event-time {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .event-type {
+            font-weight: 500;
+        text-transform: capitalize;
+        }
+
+        .event-type.info {
+            color: var(--info);
+        }
+
+        .event-type.warning {
+            color: var(--warning);
+        }
+
+        .event-type.error {
+            color: var(--error);
+        }
+
+        .event-type.success {
+            color: var(--success);
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .dashboard-content {
+                flex-direction: column;
+            }
+
+            .dashboard-sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="dashboard-header">
+        <div>
+            <h1 class="dashboard-title">📊 Monitoring Dashboard</h1>
+        </div>
+        <div class="dashboard-meta">
+            <div class="meta-item">
+                <span>Environment:</span>
+                <span class="meta-badge success">Production</span>
+            </div>
+            <div class="meta-item">
+                <span>Updated:</span>
+                <span id="last-update">Just now</span>
+            </div>
+            <button class="refresh-btn" onclick="refreshDashboard()">🔄 Refresh</button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="dashboard-content">
+        <!-- Sidebar Metrics -->
+        <aside class="dashboard-sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">System Health</div>
+
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-label">API Server</span>
+                        <span id="api-status" class="metric-value">Checking...</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div id="api-progress" class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-label">Database</span>
+                        <span id="db-status" class="metric-value">Checking...</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div id="db-progress" class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-label">Uptime</span>
+                        <span id="uptime-value" class="metric-value">Loading...</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div id="uptime-progress" class="progress-fill" style="width: 0%; background: var(--success);"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">Performance</div>
+
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-label">Response Time</span>
+                        <span id="response-time" class="metric-value">--</span>
+                        <span class="metric-trend up" id="response-trend">--</span>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-label">Requests/Min</span>
+                        <span id="requests-per-minute" class="metric-value">Loading...</span>
+                        <span class="metric-trend" id="requests-trend">--</span>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-label">Error Rate</span>
+                        <span id="error-rate" class="metric-value">Loading...</span>
+                        <span class="metric-trend" id="error-trend">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">Resources</div>
+
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-label">CPU Usage</span>
+                        <span id="cpu-usage" class="metric-value">--</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div id="cpu-progress" class="progress-fill" style="width: 0%; background: var(--info);"></div>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-label">Memory</span>
+                        <span id="memory-usage" class="metric-value">--</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div id="memory-progress" class="progress-fill" style="width: 0%; background: var(--warning);"></div>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-label">Disk</span>
+                        <span id="disk-usage" class="metric-value">--</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div id="disk-progress" class="progress-fill" style="width: 0%; background: var(--success);"></div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Dashboard -->
+        <main class="dashboard-main">
+            <!-- Status Cards -->
+            <div class="status-grid">
+                <div class="status-card">
+                    <div class="status-card-header">
+                        <span class="status-title">Overall Status</span>
+                        <span id="overall-status" class="status-badge operational">Operational</span>
+                    </div>
+                    <div class="status-metrics">
+                        <div class="status-metric">
+                            <span class="status-metric-label">Vehicles:</span>
+                            <span id="total-vehicles" class="status-metric-value">--</span>
+                        </div>
+                        <div class="status-metric">
+                            <span class="status-metric-label">Quality Score:</span>
+                            <span id="quality-score" class="status-metric-value">--</span>
+                        </div>
+                        <div class="status-metric">
+                            <span class="status-metric-label">Active Scrapers:</span>
+                            <span id="active-scrapers" class="status-metric-value">--</span>
+                        </div>
+                        <div class="status-metric">
+                            <span class="status-metric-label">Database Size:</span>
+                            <span id="db-size" class="status-metric-value">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="status-card">
+                    <div class="status-card-header">
+                        <span class="status-title">Last Backup</span>
+                        <span id="backup-status" class="status-badge operational">Success</span>
+                    </div>
+                    <div class="status-metrics">
+                        <div class="status-metric">
+                            <span class="status-metric-label">Time:</span>
+                            <span id="backup-time" class="status-metric-value">--</span>
+                        </div>
+                        <div class="status-metric">
+                            <span class="status-metric-label">Size:</span>
+                            <span id="backup-size" class="status-metric-value">--</span>
+                        </div>
+                        <div class="status-metric">
+                            <span class="status-metric-label">Retention:</span>
+                            <span class="status-metric-value">7 days</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="status-card">
+                    <div class="status-card-header">
+                        <span class="status-title">Recent Errors</span>
+                        <span id="error-count" class="status-badge operational">0 errors</span>
+                    </div>
+                    <div class="status-metrics">
+                        <div class="status-metric">
+                            <span class="status-metric-label">Last Hour:</span>
+                            <span id="errors-last-hour" class="status-metric-value">0</span>
+                        </div>
+                        <div class="status-metric">
+                            <span class="status-metric-label">Last 24h:</span>
+                            <span id="errors-last-day" class="status-metric-value">0</span>
+                        </div>
+                        <div class="status-metric">
+                            <span class="status-metric-label">Rate:</span>
+                            <span id="error-rate-24h" class="status-metric-value">0/h</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <span class="chart-title">Response Time</span>
+                        <div class="chart-period">
+                            <button class="period-btn active" onclick="setChartPeriod('1h')">1H</button>
+                            <button class="period-btn" onclick="setChartPeriod('24h')">24H</button>
+                            <button class="period-btn" onclick="setChartPeriod('7d')">7D</button>
+                            <button class="period-btn" onclick="setChartPeriod('30d')">30D</button>
+                        </div>
+                    </div>
+                    <div class="chart-canvas-container">
+                        <canvas id="response-time-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <span class="chart-title">Requests Per Minute</span>
+                        <div class="chart-period">
+                            <button class="period-btn active" onclick="setRequestsPeriod('1h')">1H</button>
+                            <button class="period-btn" onclick="setRequestsPeriod('24h')">24H</button>
+                            <button class="period-btn" onclick="setRequestsPeriod('7d')">7D</button>
+                            <button class="period-btn" onclick="setRequestsPeriod('30d')">30D</button>
+                        </div>
+                    </div>
+                    <div class="chart-canvas-container">
+                        <canvas id="requests-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Events -->
+            <div class="events-section">
+                <div class="events-header">
+                    <span class="events-title">Recent Events</span>
+                    <span style="font-size: 12px; color: var(--text-muted);">Last 20 events</span>
+                </div>
+                <table class="events-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Type</th>
+                            <th>Message</th>
+                            <th>Source</th>
+                        </tr>
+                    </thead>
+                    <tbody id="events-table-body">
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: var(--text-muted);">Loading events...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let responseTimeChart = null;
+        let requestsChart = null;
+        let metricsData = {
+            responseTime: [],
+            requestsPerMinute: [],
+            labels: []
+        };
+
+        async function refreshDashboard() {
+            try {
+                // Update last update time
+                document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+
+                // Fetch metrics from API
+                const [healthRes, statsRes, eventsRes] = await Promise.all([
+                    fetch('/api/health').then(r => r.json()),
+                    fetch('/api/stats').then(r => r.json()),
+                    fetch('/api/events?limit=20').then(r => r.json()).catch(() => ({ events: [] }))
+                ]);
+
+                // Update system health
+                updateSystemHealth(healthRes);
+
+                // Update stats
+                updateStats(statsRes);
+
+                // Update events
+                updateEvents(eventsRes.events || []);
+
+                // Update charts
+                await updateCharts();
+
+            } catch (error) {
+                console.error('Failed to refresh dashboard:', error);
+                showNotification('Failed to refresh dashboard', 'error');
+            }
+        }
+
+        function updateSystemHealth(healthRes) {
+            if (!healthRes || !healthRes.success) {
+                document.getElementById('api-status').textContent = 'Unknown';
+                document.getElementById('api-progress').style.width = '0%';
+                return;
+            }
+
+            const apiStatus = healthRes.status;
+            const apiOperational = apiStatus === 'healthy';
+
+            document.getElementById('api-status').textContent = apiOperational ? 'Healthy' : 'Unhealthy';
+            document.getElementById('api-status').style.color = apiOperational ? 'var(--success)' : 'var(--error)';
+            document.getElementById('api-progress').style.width = apiOperational ? '100%' : '0%';
+
+            // DB health (mock for now)
+            const dbOperational = true; // Would check /api/health/db
+            document.getElementById('db-status').textContent = dbOperational ? 'Connected' : 'Disconnected';
+            document.getElementById('db-status').style.color = dbOperational ? 'var(--success)' : 'var(--error)';
+            document.getElementById('db-progress').style.width = dbOperational ? '100%' : '0%';
+
+            // Uptime (mock for now)
+            const uptime = 99.7; // Would calculate from start time
+            document.getElementById('uptime-value').textContent = uptime.toFixed(1) + '%';
+            document.getElementById('uptime-progress').style.width = uptime + '%';
+
+            // Overall status
+            const overallStatus = document.getElementById('overall-status');
+            if (apiOperational && dbOperational) {
+                overallStatus.textContent = 'Operational';
+                overallStatus.className = 'status-badge operational';
+            } else {
+                overallStatus.textContent = 'Degraded';
+                overallStatus.className = 'status-badge degraded';
+            }
+        }
+
+        function updateStats(statsRes) {
+            if (!statsRes || !statsRes.success) return;
+
+            const stats = statsRes.stats || {};
+            const quality = stats.quality || {};
+
+            document.getElementById('total-vehicles').textContent = stats.totalVehicles || '--';
+            document.getElementById('quality-score').textContent = quality.avgScore || '--';
+            document.getElementById('active-scrapers').textContent = stats.activeScrapers || '--';
+            document.getElementById('db-size').textContent = formatBytes(stats.dbSize || 0);
+
+            // Backup info (mock for now)
+            document.getElementById('backup-time').textContent = '2:30 AM';
+            document.getElementById('backup-size').textContent = '142 MB';
+        }
+
+        function updateEvents(events) {
+            const tbody = document.getElementById('events-table-body');
+            tbody.innerHTML = '';
+
+            if (!events || events.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No events recorded</td></tr>';
+                return;
+            }
+
+            events.forEach(event => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="event-time">${new Date(event.timestamp).toLocaleString()}</td>
+                    <td class="event-type ${event.type}">${event.type}</td>
+                    <td>${escapeHtml(event.message)}</td>
+                    <td>${escapeHtml(event.source || 'system')}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        async function updateCharts() {
+            const period = getCurrentChartPeriod();
+            const data = await fetchChartData(period);
+
+            updateResponseTimeChart(data.responseTime);
+            updateRequestsChart(data.requestsPerMinute);
+        }
+
+        async function fetchChartData(period) {
+            // Mock data for now - would fetch from API
+            const now = Date.now();
+            const points = period === '1h' ? 60 : period === '24h' ? 1440 : 2880;
+
+            return {
+                responseTime: Array.from({ length: points }, (_, i) => ({
+                        x: now - (points - i) * 60000,
+                        y: Math.random() * 200 + 100
+                })),
+                requestsPerMinute: Array.from({ length: points }, (_, i) => ({
+                        x: now - (points - i) * 60000,
+                        y: Math.floor(Math.random() * 50) + 10
+                }))
+            };
+        }
+
+        function updateResponseTimeChart(data) {
+            const ctx = document.getElementById('response-time-chart').getContext('2d');
+
+            if (responseTimeChart) {
+                responseTimeChart.data = data;
+                responseTimeChart.update();
+            } else {
+                responseTimeChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                                labels: data.map(d => new Date(d.x).toLocaleTimeString()),
+                                datasets: [{
+                                        label: 'Response Time (ms)',
+                                        data: data.map(d => d.y),
+                                        borderColor: 'rgb(99, 102, 241)',
+                                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                                        tension: 0.4,
+                                        fill: false
+                                }]
+                        },
+                        options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                        legend: {
+                                                display: false
+                                        }
+                                },
+                                scales: {
+                                        y: {
+                                                beginAtZero: true,
+                                                title: {
+                                                        display: true,
+                                                        text: 'Response Time (ms)'
+                                                }
+                                        }
+                                }
+                        }
+                });
+            }
+        }
+
+        function updateRequestsChart(data) {
+            const ctx = document.getElementById('requests-chart').getContext('2d');
+
+            if (requestsChart) {
+                requestsChart.data = data;
+                requestsChart.update();
+            } else {
+                requestsChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                                labels: data.map(d => new Date(d.x).toLocaleTimeString()),
+                                datasets: [{
+                                        label: 'Requests/Min',
+                                        data: data.map(d => d.y),
+                                        backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                                        borderColor: 'rgb(99, 102, 241)'
+                                }]
+                        },
+                        options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                        legend: {
+                                                display: false
+                                        }
+                                },
+                                scales: {
+                                        y: {
+                                                beginAtZero: true,
+                                                title: {
+                                                        display: true,
+                                                        text: 'Requests Per Minute'
+                                                }
+                                        }
+                                }
+                        }
+                });
+            }
+        }
+
+        function setChartPeriod(period) {
+            // Update active button
+            document.querySelectorAll('.period-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Refresh chart
+            updateCharts();
+
+            // Save preference
+            localStorage.setItem('chartPeriod', period);
+        }
+
+        function setRequestsPeriod(period) {
+            document.querySelectorAll('.period-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            updateCharts();
+            localStorage.setItem('requestsPeriod', period);
+        }
+
+        function getCurrentChartPeriod() {
+            return localStorage.getItem('chartPeriod') || '1h';
+        }
+
+        function getCurrentRequestsPeriod() {
+            return localStorage.getItem('requestsPeriod') || '1h';
+        }
+
+        function formatBytes(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+            return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+        }
+
+        function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+        }
+
+        function showNotification(message, type) {
+            // Simple notification system
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'error' ? 'var(--error)' : 'var(--success)'};
+                color: white;
+                padding: 16px 24px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(refreshDashboard, 30000);
+
+        // Initial load
+        refreshDashboard();
+    </script>
+</body>
+</html>

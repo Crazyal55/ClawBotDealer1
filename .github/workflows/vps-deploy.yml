@@ -1,0 +1,261 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: 'Skip tests and deploy directly'
+        required: false
+        type: boolean
+      environment:
+        description: 'Target environment (dev/staging/prod)'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    if: ${{ inputs.skip_tests != 'true' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm run test:ci
+
+      - name: Generate coverage report
+        if: always()
+        run: npm run test:coverage
+        continue-on-error: true
+
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/lcov.info
+          flags: vps
+          fail_ci_if_error: true
+
+      - name: Archive coverage artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 30
+
+  deploy:
+    name: Deploy to VPS
+    needs: test
+    runs-on: ubuntu-latest
+    env:
+      ENVIRONMENT: ${{ inputs.environment }}
+      DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+      VPS_USER: ${{ secrets.VPS_USER }}
+      VPS_PATH: ${{ secrets.VPS_PATH }}
+      DB_BACKUP_PASS: ${{ secrets.DB_BACKUP_PASS }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup deployment environment
+        run: |
+          echo "🚀 Deploying to ${ENVIRONMENT} environment"
+          echo "Host: ${VPS_HOST}"
+          echo "User: ${VPS_USER}"
+          echo "Path: ${VPS_PATH}"
+
+      - name: Create deployment package
+        run: |
+          echo "📦 Creating deployment package"
+          tar -czf deploy.tar.gz \
+            --exclude=node_modules \
+            --exclude=.git \
+            --exclude=coverage \
+            --exclude=tests \
+            .
+
+      - name: Copy package to VPS
+        run: |
+          echo "📤 Uploading deployment package"
+          scp -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            -o LogLevel=ERROR \
+            deploy.tar.gz \
+            ${VPS_USER}@${VPS_HOST}:/tmp/
+
+      - name: Extract and deploy on VPS
+        run: |
+          echo "🔧 Extracting and deploying on VPS"
+          ssh -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            -o LogLevel=ERROR \
+            ${VPS_USER}@${VPS_HOST} << 'EOF'
+            set -euo pipefail
+
+            # Create backup before deployment
+            cd "${VPS_PATH}"
+            echo "📋 Creating pre-deployment backup"
+            if [[ "${ENVIRONMENT}" == "prod" ]]; then
+              sudo -u dealerdevops bash /opt/dealer-dev-ops/scripts/backup-database.sh
+            fi
+
+            # Extract deployment package
+            echo "📦 Extracting deployment package"
+            tar -xzf /tmp/deploy.tar.gz -C "${VPS_PATH}"
+
+            # Install dependencies
+            echo "📦 Installing dependencies"
+            cd "${VPS_PATH}"
+            npm ci --omit=dev
+
+            # Update environment file if needed
+            echo "⚙️  Updating environment configuration"
+            if [[ "${ENVIRONMENT}" == "prod" ]]; then
+              sudo -u dealerdevops bash -c '
+                source /etc/dealer-dev-ops.env
+                if [[ -z "${DATABASE_URL:-}" ]]; then
+                  echo "❌ DATABASE_URL not set in production"
+                  exit 1
+                fi
+              '
+            fi
+
+            # Restart service
+            echo "🔄 Restarting application service"
+            sudo systemctl restart dealer-dev-ops
+
+            # Clean up
+            echo "🧹 Cleaning up deployment artifacts"
+            rm -f /tmp/deploy.tar.gz
+
+            # Verify deployment
+            echo "✅ Verifying deployment"
+            sleep 5
+            if curl -fsS http://localhost:3100/api/health/db > /dev/null; then
+              echo "✅ Deployment successful!"
+            else
+              echo "❌ Deployment failed - health check error"
+              exit 1
+            fi
+          EOF
+
+      - name: Post-deployment verification
+        run: |
+          echo "🔍 Running post-deployment checks"
+
+          # Check API health
+          API_HEALTH=$(curl -fsS http://${VPS_HOST}/api/health || echo "failed")
+          echo "API Health: ${API_HEALTH}"
+
+          # Check database connectivity
+          DB_HEALTH=$(curl -fsS http://${VPS_HOST}/api/health/db || echo "failed")
+          echo "Database Health: ${DB_HEALTH}"
+
+          if [[ "${API_HEALTH}" == "ok" ]] && [[ "${DB_HEALTH}" == "ok" ]]; then
+            echo "✅ All health checks passed"
+          else
+            echo "❌ Some health checks failed"
+            exit 1
+          fi
+
+      - name: Notify deployment status
+        if: always()
+        run: |
+          if [[ "${{{ job.status }}" == "success" ]]; then
+            echo "✅ Deployment to ${ENVIRONMENT} completed successfully"
+          else
+            echo "❌ Deployment to ${ENVIRONMENT} failed"
+          fi
+
+  rollback:
+    name: Rollback deployment
+    runs-on: ubuntu-latest
+    if: ${{ inputs.skip_tests != 'true' }}
+    env:
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+      VPS_USER: ${{ secrets.VPS_USER }}
+      VPS_PATH: ${{ secrets.VPS_PATH }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.push.before }}
+
+      - name: Create rollback package
+        run: |
+          echo "📦 Creating rollback package"
+          tar -czf rollback.tar.gz \
+            --exclude=node_modules \
+            --exclude=.git \
+            --exclude=coverage \
+            --exclude=tests \
+            .
+
+      - name: Upload and restore previous version
+        run: |
+          echo "🔄 Restoring previous version on VPS"
+          scp -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            -o LogLevel=ERROR \
+            rollback.tar.gz \
+            ${VPS_USER}@${VPS_HOST}:/tmp/
+
+          ssh -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            -o LogLevel=ERROR \
+            ${VPS_USER}@${VPS_HOST} << 'EOF'
+            set -euo pipefail
+
+            cd "${VPS_PATH}"
+
+            # Stop service before restore
+            echo "⏹ Stopping service"
+            sudo systemctl stop dealer-dev-ops
+
+            # Restore from backup
+            echo "📋 Restoring from database backup"
+            if [[ -f "/var/backups/dealer-dev-ops/summit_auto_restore_dump.sql.gz" ]]; then
+              sudo -u dealerdevops bash /opt/dealer-dev-ops/scripts/restore-drill.sh
+            fi
+
+            # Extract rollback package
+            echo "📦 Extracting rollback package"
+            tar -xzf /tmp/rollback.tar.gz -C "${VPS_PATH}"
+
+            # Install dependencies
+            echo "📦 Installing dependencies"
+            cd "${VPS_PATH}"
+            npm ci --omit=dev
+
+            # Restart service
+            echo "🔄 Restarting service"
+            sudo systemctl start dealer-dev-ops
+
+            # Verify rollback
+            echo "✅ Verifying rollback"
+            sleep 5
+            if curl -fsS http://localhost:3100/api/health/db > /dev/null; then
+              echo "✅ Rollback successful!"
+            else
+              echo "❌ Rollback failed"
+              exit 1
+            fi
+          EOF
