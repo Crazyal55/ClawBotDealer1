@@ -490,8 +490,8 @@ npm run test:ci
 
 ### Code Quality
 - **TypeScript definitions**: `@types/` for all packages
-- **ESLint**: Not configured
-- **Prettier**: Not configured
+- **ESLint**: Configured via `npm run lint`
+- **Prettier**: Configured via `npm run format` / `npm run format:check`
 - **Style guide**: Airbnb (recommended)
 
 ---
@@ -500,10 +500,10 @@ npm run test:ci
 
 ```bash
 # Development
-npm run dev                    # Nodemon with server.js
-npm run dev:pg                # Nodemon with server_pg.js
-npm run start                  # Production server.js
-npm run start:pg               # Production server_pg.js
+npm run dev                    # Nodemon with server_pg.js
+npm run start                  # Production server_pg.js
+npm run start:sqlite           # Legacy SQLite runtime (server.js)
+npm run start:pg               # Alias for server_pg.js
 
 # Database
 npm run db:pg:init             # Initialize PostgreSQL
@@ -518,7 +518,7 @@ npm run test:ci               # CI mode
 
 # Quality
 npm run type-check             # TypeScript check
-npm run ci                    # Type check + smoke test
+npm run ci                     # lint + type-check + smoke test
 ```
 
 ---

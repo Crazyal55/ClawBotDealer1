@@ -1,6 +1,6 @@
 # Dealer Dev Ops
 
-This repository currently runs on `server.js` with SQLite (`cars.db`) as the active local runtime.
+This repository now runs on `server_pg.js` with PostgreSQL as the active runtime.
 
 ## Hosting Decision
 
@@ -9,8 +9,8 @@ This repository currently runs on `server.js` with SQLite (`cars.db`) as the act
 
 ## Runtime Target
 
-- Active runtime: `server.js` (Node.js + Express + SQLite)
-- API health endpoint: `GET /health`
+- Active runtime: `server_pg.js` (Node.js + Express + PostgreSQL)
+- API health endpoint: `GET /api/health`
 - Frontend: static files from `public/`
 
 ## Prerequisites
@@ -29,17 +29,18 @@ Open `http://localhost:3000`.
 
 ## Scripts
 
-- `npm start` - start active runtime (`server.js`)
-- `npm run dev` - start runtime with `nodemon`
-- `npm run start:pg` - start PostgreSQL runtime (`server_pg.js`)
+- `npm start` - start active runtime (`server_pg.js`)
+- `npm run dev` - start active runtime with `nodemon` (`server_pg.js`)
+- `npm run start:pg` - alias for PostgreSQL runtime (`server_pg.js`)
+- `npm run start:sqlite` - legacy SQLite runtime (`server.js`)
 - `npm run db:pg:init` - initialize PostgreSQL schema + seed data
 - `npm run type-check` - run TypeScript compile check for `src/`
-- `npm run test:smoke` - start server and verify `GET /health`
-- `npm run ci` - run `type-check` then smoke test
+- `npm run test:smoke` - start active runtime and verify `GET /api/health`
+- `npm run ci` - run `lint`, `type-check`, then smoke test
 
 ## Hybrid DB Setup (Your Order)
 
-### Step 1: Scraper First
+### Step 1: Scraper First (PostgreSQL Runtime)
 
 1. Start app:
    - `npm start`
@@ -60,7 +61,7 @@ Open `http://localhost:3000`.
 2. Initialize schema + seed:
    - `npm run db:pg:init`
 3. Start PostgreSQL runtime:
-   - `npm run start:pg`
+   - `npm start` (or `npm run start:pg`)
 4. Verify:
    - `GET http://localhost:3000/api/health`
 
@@ -90,8 +91,9 @@ Notes:
 
 ## Current Architecture
 
-- `server.js` - active JS/SQLite API runtime
-- `db.js` - SQLite data access
+- `server_pg.js` - active PostgreSQL API runtime
+- `db_pg.js` - PostgreSQL data access
+- `server.js` / `db.js` - legacy SQLite fallback runtime/data layer
 - `scraper.js` - curl-based scraping and extraction
 - `src/` - TypeScript API/domain layer under active repair and type-check gating
   - `src/index.ts` - TS API entrypoint (not the active runtime)
@@ -101,17 +103,20 @@ Notes:
 
 ## Main API Endpoints (Active Runtime)
 
-- `GET /health` - process health
+- `GET /api/health` - process health
+- `GET /api/health/db` - DB + pool health
 - `GET /api/inventory` - list inventory
 - `POST /api/scrape` - scrape inventory from curl input
 - `POST /api/scrape/batch` - batch scrape
 - `DELETE /api/inventory/:id` - delete one
 - `DELETE /api/inventory` - clear all
 - `GET /api/stats` - summary stats
+- `GET /api/dealerships/overview` - dealership/location rollups
+- `GET /api/quality/verify` - quality verification findings
 
 ## Notes
 
-- `server_pg.js` and TS/Postgres files remain in the repo for future migration work.
-- If you switch active runtime later, update `package.json` scripts and this README together.
+- `server.js` remains available as a legacy SQLite fallback for local-only scenarios.
+- If runtime target changes later, keep `package.json` scripts and this README in sync.
 - Security defaults now include `helmet`, API rate limiting, and CORS origin allowlisting via `CORS_ORIGINS`.
 - PostgreSQL runtime now exposes pool health at `GET /api/health/db`.

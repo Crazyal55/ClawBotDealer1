@@ -3,18 +3,24 @@ set -euo pipefail
 
 APP_DIR="${APP_DIR:-/opt/dealer-dev-ops}"
 SERVICE_NAME="${SERVICE_NAME:-dealer-dev-ops}"
-BRANCH="${BRANCH:-main}"
+
+if [[ -n "${BRANCH:-}" ]]; then
+  DEPLOY_BRANCH="${BRANCH}"
+else
+  DEPLOY_BRANCH="$(git remote show origin 2>/dev/null | awk '/HEAD branch/ {print $NF}' | tail -n 1)"
+  DEPLOY_BRANCH="${DEPLOY_BRANCH:-master}"
+fi
 
 echo "[deploy] app dir: ${APP_DIR}"
 echo "[deploy] service: ${SERVICE_NAME}"
-echo "[deploy] branch: ${BRANCH}"
+echo "[deploy] branch: ${DEPLOY_BRANCH}"
 
 cd "${APP_DIR}"
 
 echo "[deploy] fetching latest code"
 git fetch origin
-git checkout "${BRANCH}"
-git pull --ff-only origin "${BRANCH}"
+git checkout "${DEPLOY_BRANCH}"
+git pull --ff-only origin "${DEPLOY_BRANCH}"
 
 echo "[deploy] installing dependencies"
 npm ci

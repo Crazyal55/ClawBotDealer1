@@ -1,8 +1,8 @@
 const { spawn } = require('child_process');
 
-const SERVER_ENTRY = process.env.SERVER_ENTRY || 'server.js';
+const SERVER_ENTRY = process.env.SERVER_ENTRY || 'server_pg.js';
 const SERVER_PORT = process.env.SERVER_PORT || '3000';
-const SERVER_URL = process.env.HEALTH_URL || `http://127.0.0.1:${SERVER_PORT}/health`;
+const SERVER_URL = process.env.HEALTH_URL || `http://127.0.0.1:${SERVER_PORT}/api/health`;
 const START_TIMEOUT_MS = 20000;
 
 async function sleep(ms) {
@@ -18,7 +18,7 @@ async function waitForHealth() {
       const response = await fetch(SERVER_URL);
       if (response.ok) {
         const body = await response.json();
-        if (body && body.status) {
+        if (body && (body.status || body.success !== undefined)) {
           return body;
         }
       }
@@ -48,7 +48,7 @@ async function main() {
 
   try {
     const body = await waitForHealth();
-    console.log(`[smoke] /health ok: ${JSON.stringify(body)}`);
+    console.log(`[smoke] health ok: ${JSON.stringify(body)}`);
   } finally {
     if (!server.killed) {
       server.kill('SIGTERM');

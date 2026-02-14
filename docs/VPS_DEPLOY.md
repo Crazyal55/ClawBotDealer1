@@ -221,6 +221,10 @@ chmod +x scripts/deploy_vps.sh
 sudo bash scripts/deploy_vps.sh
 ```
 
+Optional:
+- Override branch explicitly: `sudo BRANCH=master bash scripts/deploy_vps.sh`
+- If `BRANCH` is not set, script auto-detects `origin` HEAD branch and falls back to `master`.
+
 Deploy script validates PostgreSQL runtime via:
 - `SERVER_ENTRY=server_pg.js`
 - `SERVER_PORT=3100`
