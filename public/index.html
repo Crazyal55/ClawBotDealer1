@@ -60,6 +60,24 @@
             --radius-xl: 20px;
         }
 
+        /* Skip Link for Accessibility */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--accent-primary);
+            color: var(--bg-app);
+            padding: 8px 16px;
+            z-index: 10000;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: var(--bg-app);
@@ -174,6 +192,41 @@
         .nav-indicator.active {
             background: var(--accent-primary);
             box-shadow: 0 0 8px rgba(91, 140, 122, 0.3);
+        }
+
+        /* Mobile Menu Toggle Button */
+        .mobile-menu-toggle {
+            display: none;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-primary);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 20px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mobile-menu-toggle:hover {
+            background: var(--bg-hover);
+            border-color: var(--border-default);
+        }
+
+        /* Mobile Sidebar Overlay */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
         }
 
         .sidebar-footer {
@@ -717,8 +770,27 @@
         }
 
         @media (max-width: 768px) {
+            .mobile-menu-toggle {
+                display: flex;
+            }
+
             .sidebar {
-                display: none;
+                position: fixed;
+                left: -100%;
+                top: 0;
+                height: 100vh;
+                z-index: 1000;
+                transition: left 0.3s ease;
+                width: 280px;
+                max-width: 85vw;
+            }
+
+            .sidebar.mobile-open {
+                left: 0;
+            }
+
+            .sidebar-overlay.active {
+                display: block;
             }
 
             .stats-grid {
@@ -732,8 +804,14 @@
     </style>
 </head>
 <body>
+    <!-- Skip Link for Accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <!-- Mobile Sidebar Overlay -->
+    <div class="sidebar-overlay" onclick="closeMobileMenu()"></div>
+
     <!-- Sidebar -->
-    <aside class="sidebar">
+    <aside class="sidebar" role="navigation" aria-label="Main navigation">
         <div class="sidebar-header">
             <div class="logo">
                 <div class="logo-dot"></div>
@@ -823,10 +901,13 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="main-content">
+    <main id="main-content" class="main-content" role="main">
         <!-- Top Bar -->
-        <header class="top-bar">
+        <header class="top-bar" role="banner">
             <div class="top-bar-left">
+                <button class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Toggle navigation menu">
+                    ☰
+                </button>
                 <h1 class="panel-title">Dealer Dev Ops</h1>
             </div>
             <div class="top-bar-right">
@@ -912,7 +993,7 @@
                     <div style="display: grid; gap: var(--spacing-md); margin-top: var(--spacing-lg);">
                         <div style="background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: var(--spacing-lg);">
                             <div style="font-size: 12px; color: var(--text-muted); margin-bottom: var(--spacing-sm);">Source Name</div>
-                            <input type="text" class="search-input" placeholder="Example: Cars.com - Austin" style="max-width: 100%;">
+                            <input id="scraper-source-name" type="text" class="search-input" placeholder="Example: Cars.com - Austin" style="max-width: 100%;">
                         </div>
                         <div style="background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: var(--spacing-lg);">
                             <div style="font-size: 12px; color: var(--text-muted); margin-bottom: var(--spacing-sm);">Target URL</div>
@@ -947,18 +1028,21 @@
                             <iframe id="scraper-preview-frame" class="preview-frame" title="Scraper URL Preview"></iframe>
                         </div>
                         <div style="display: flex; gap: var(--spacing-sm);">
-                            <button class="btn btn-primary">Scrape & Add</button>
-                            <button class="btn btn-secondary">Test Scrape</button>
-                            <button class="btn btn-secondary">Batch Scrape</button>
+                            <button id="scraper-btn-save" class="btn btn-primary" onclick="runScrapeAction('save')">Scrape & Add</button>
+                            <button id="scraper-btn-test" class="btn btn-secondary" onclick="runScrapeAction('test')">Test Scrape</button>
+                            <button id="scraper-btn-batch" class="btn btn-secondary" onclick="runScrapeAction('batch')">Batch Scrape</button>
+                        </div>
+                        <div style="background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: var(--spacing-lg);">
+                            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: var(--spacing-sm);">Run Status</div>
+                            <div id="scraper-run-status" style="font-size: 13px; color: var(--text-secondary); margin-bottom: var(--spacing-sm);">
+                                Ready. Enter a source and curl command.
+                            </div>
+                            <pre id="scraper-run-output" style="margin: 0; max-height: 180px; overflow: auto; font-size: 12px; color: var(--text-muted); background: var(--bg-app); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: var(--spacing-sm); white-space: pre-wrap;"></pre>
                         </div>
                         <div class="table-wrap">
                             <table class="data-table">
                                 <thead><tr><th>Run Time</th><th>Source</th><th>Cars</th><th>Status</th></tr></thead>
-                                <tbody>
-                                    <tr><td>10:42 AM</td><td>Cars.com - Austin</td><td>14</td><td>Success</td></tr>
-                                    <tr><td>9:17 AM</td><td>AutoTrader - Dallas</td><td>0</td><td>Failed (blocked)</td></tr>
-                                    <tr><td>8:54 AM</td><td>Dealer Site - Denver</td><td>9</td><td>Success</td></tr>
-                                </tbody>
+                                <tbody id="scraper-run-history-body"></tbody>
                             </table>
                         </div>
                     </div>
@@ -1290,6 +1374,25 @@
     </main>
 
     <script>
+        // Mobile Menu Toggle
+        function toggleMobileMenu() {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.querySelector('.sidebar-overlay');
+            if (sidebar && overlay) {
+                sidebar.classList.toggle('mobile-open');
+                overlay.classList.toggle('active');
+            }
+        }
+
+        function closeMobileMenu() {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.querySelector('.sidebar-overlay');
+            if (sidebar && overlay) {
+                sidebar.classList.remove('mobile-open');
+                overlay.classList.remove('active');
+            }
+        }
+
         function selectTab(tabName, element) {
             document.querySelectorAll('.nav-item').forEach((item) => {
                 item.classList.remove('active');
@@ -1309,6 +1412,9 @@
                 const page = document.getElementById(`page-${name}`);
                 if (page) page.style.display = name === route ? 'block' : 'none';
             });
+
+            // Close mobile menu after selecting a tab
+            closeMobileMenu();
 
             if (route === 'dealership') {
                 loadDealershipOverview();
@@ -1559,11 +1665,142 @@
             status.textContent = `Preview target: ${resolvedUrl}`;
         }
 
+        const scraperRunHistory = [];
+
+        function setScraperButtonsDisabled(disabled) {
+            ['scraper-btn-save', 'scraper-btn-test', 'scraper-btn-batch'].forEach((id) => {
+                const button = document.getElementById(id);
+                if (button) button.disabled = disabled;
+            });
+        }
+
+        function setScraperRunStatus(message, tone = 'muted') {
+            const status = document.getElementById('scraper-run-status');
+            if (!status) return;
+            status.textContent = message;
+            if (tone === 'error') status.style.color = 'var(--accent-error)';
+            else if (tone === 'success') status.style.color = 'var(--accent-success)';
+            else status.style.color = 'var(--text-secondary)';
+        }
+
+        function setScraperRunOutput(payload) {
+            const output = document.getElementById('scraper-run-output');
+            if (!output) return;
+            output.textContent = payload ? JSON.stringify(payload, null, 2) : '';
+        }
+
+        function addScraperHistoryEntry(entry) {
+            scraperRunHistory.unshift(entry);
+            if (scraperRunHistory.length > 12) {
+                scraperRunHistory.pop();
+            }
+
+            const tbody = document.getElementById('scraper-run-history-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            scraperRunHistory.forEach((row) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${row.time}</td>
+                    <td>${row.source}</td>
+                    <td>${row.cars}</td>
+                    <td>${row.status}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function getScraperSourceName() {
+            return document.getElementById('scraper-source-name')?.value?.trim() || 'manual-source';
+        }
+
+        function getScraperCurlCommand() {
+            return document.getElementById('scraper-curl-command')?.value?.trim() || '';
+        }
+
+        function parseBatchCurlCommands(raw) {
+            const matches = raw.match(/curl[\s\S]*?(?=\ncurl\s|$)/gi) || [];
+            return matches.map((item) => item.trim()).filter(Boolean);
+        }
+
+        async function runScrapeAction(mode) {
+            const sourceName = getScraperSourceName();
+            const curlCommand = getScraperCurlCommand();
+
+            if (!curlCommand) {
+                setScraperRunStatus('Paste at least one curl command first.', 'error');
+                return;
+            }
+
+            setScraperButtonsDisabled(true);
+            setScraperRunStatus('Running scraper request...', 'muted');
+
+            try {
+                let endpoint = '/api/test';
+                let payload = { curlCommand, sourceName };
+                if (mode === 'save') endpoint = '/api/scrape';
+                if (mode === 'batch') {
+                    endpoint = '/api/scrape/batch';
+                    payload = {
+                        curlCommands: parseBatchCurlCommands(curlCommand),
+                        sourceName
+                    };
+                    if (!payload.curlCommands.length) {
+                        throw new Error('Batch mode expects one curl command per line.');
+                    }
+                }
+
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                if (!response.ok || result.success === false) {
+                    throw new Error(result.message || 'Scraper request failed');
+                }
+
+                const carsCount = mode === 'batch'
+                    ? Number(result.totalCars || 0)
+                    : Array.isArray(result.data) ? result.data.length : 0;
+                const metrics = result.metrics ? ` (inserted: ${result.metrics.inserted || 0}, updated: ${result.metrics.updated || 0}, skipped: ${result.metrics.skipped || 0})` : '';
+                const successMessage = `${mode.toUpperCase()} successful: ${carsCount} cars${metrics}`;
+
+                setScraperRunStatus(successMessage, 'success');
+                setScraperRunOutput(result);
+                addScraperHistoryEntry({
+                    time: new Date().toLocaleTimeString(),
+                    source: sourceName,
+                    cars: carsCount,
+                    status: 'Success'
+                });
+            } catch (error) {
+                setScraperRunStatus(`Error: ${error.message}`, 'error');
+                setScraperRunOutput({ error: error.message });
+                addScraperHistoryEntry({
+                    time: new Date().toLocaleTimeString(),
+                    source: sourceName,
+                    cars: 0,
+                    status: 'Failed'
+                });
+            } finally {
+                setScraperButtonsDisabled(false);
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             initDatabaseFieldPicker();
             loadDealershipOverview();
             applyDealershipFilters();
             resetChatSimulator();
+            addScraperHistoryEntry({
+                time: '--',
+                source: 'No runs yet',
+                cars: '--',
+                status: 'Idle'
+            });
         });
     </script>
 </body>
