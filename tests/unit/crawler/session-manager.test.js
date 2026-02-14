@@ -1,5 +1,5 @@
 const axios = require('axios');
-const SessionManager = require('../../../../crawler/session-manager');
+const SessionManager = require('../../../crawler/session-manager');
 
 jest.mock('axios');
 const mockedAxios = axios;

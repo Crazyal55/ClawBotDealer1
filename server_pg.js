@@ -441,10 +441,16 @@ async function shutdown(signal) {
 process.on('SIGINT', () => shutdown('SIGINT'));
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 
-app.listen(PORT, () => {
-  console.log(`🚗 Car Scraper Dashboard running at http://localhost:${PORT}`);
-  console.log(`📊 Database: PostgreSQL`);
-  console.log(`📍 Dealers: Summit Automotive Group (3 locations)`);
-  console.log(`🚗 Vehicles: 59 (placeholder data)`);
-  console.log(`\n✅ Ready for development`);
-});
+let server = null;
+if (require.main === module) {
+  server = app.listen(PORT, () => {
+    console.log(`Car Scraper Dashboard running at http://localhost:${PORT}`);
+    console.log("Database: PostgreSQL");
+    console.log("Dealers: Summit Automotive Group (3 locations)");
+    console.log("Vehicles: 59 (placeholder data)");
+    console.log("Ready for development");
+  });
+}
+
+module.exports = { app, server, db };
+
