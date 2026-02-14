@@ -1,14 +1,50 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const DatabasePG = require('./db_pg');
 const scraper = require('./scraper');
 
 const app = express();
 const PORT = 3000;
 
-app.use(cors());
+const allowedOrigins = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Origin not allowed by CORS'));
+  }
+};
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: Number(process.env.RATE_LIMIT_MAX || 300),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many requests, please try again later.'
+  }
+});
+
+app.use(helmet());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.static('public'));
+app.use('/api', apiLimiter);
+app.use((err, req, res, next) => {
+  if (err && err.message === 'Origin not allowed by CORS') {
+    return res.status(403).json({ success: false, message: err.message });
+  }
+  return next(err);
+});
 
 const db = new DatabasePG();
 

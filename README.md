@@ -63,6 +63,11 @@ Notes:
 - SQL schema/seed file is `docs/placeholder_data.sql`.
 - Next phase for hybrid search is adding vectors/embeddings keyed by SQL `vehicles.id`.
 
+## Documentation
+
+- Progress tracker: `docs/PROGRESS_UPDATE.md`
+- Azure cloud setup runbook: `docs/AZURE_SETUP.md`
+
 ## Current Architecture
 
 - `server.js` - active JS/SQLite API runtime

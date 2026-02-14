@@ -1,5 +1,7 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const Database = require('./db');
 const scraper = require('./scraper');
 const CarInventoryCrawler = require('./crawler');
@@ -7,9 +9,43 @@ const CarInventoryCrawler = require('./crawler');
 const app = express();
 const PORT = 3000;
 
-app.use(cors());
+const allowedOrigins = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Origin not allowed by CORS'));
+  }
+};
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: Number(process.env.RATE_LIMIT_MAX || 300),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many requests, please try again later.'
+  }
+});
+
+app.use(helmet());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.static('public'));
+app.use('/api', apiLimiter);
+app.use((err, req, res, next) => {
+  if (err && err.message === 'Origin not allowed by CORS') {
+    return res.status(403).json({ success: false, message: err.message });
+  }
+  return next(err);
+});
 
 const db = new Database();
 
@@ -239,40 +275,27 @@ app.get('/api/inventory/vin/:vin', async (req, res) => {
 
 app.delete('/api/inventory/duplicates', async (req, res) => {
   try {
-    // Find all duplicates and keep only the newest one
-    const duplicates = await new Promise((resolve, reject) => {
-      db.db.all(`
-        SELECT vin, MAX(scraped_at) as keep_date, GROUP_CONCAT(id) as all_ids
-        FROM inventory
-        WHERE vin IS NOT NULL
-        GROUP BY vin
-        HAVING COUNT(*) > 1
-      `, (err, rows) => {
+    const deletedCount = await new Promise((resolve, reject) => {
+      db.db.run(`
+        DELETE FROM inventory
+        WHERE id IN (
+          SELECT id FROM (
+            SELECT
+              id,
+              ROW_NUMBER() OVER (
+                PARTITION BY vin
+                ORDER BY datetime(scraped_at) DESC, id DESC
+              ) AS row_num
+            FROM inventory
+            WHERE vin IS NOT NULL AND TRIM(vin) <> ''
+          ) ranked
+          WHERE row_num > 1
+        )
+      `, function(err) {
         if (err) reject(err);
-        else resolve(rows);
+        else resolve(this.changes || 0);
       });
     });
-
-    let deletedCount = 0;
-    for (const dup of duplicates) {
-      const allIds = dup.all_ids.split(',').map(Number);
-      const keepId = await new Promise((resolve, reject) => {
-        db.db.get(
-          `SELECT id FROM inventory WHERE vin = ? ORDER BY scraped_at DESC LIMIT 1`,
-          [dup.vin],
-          (err, row) => {
-            if (err) reject(err);
-            else resolve(row.id);
-          }
-        );
-      });
-
-      const toDelete = allIds.filter(id => id !== keepId);
-      for (const id of toDelete) {
-        await db.deleteInventory(id);
-        deletedCount++;
-      }
-    }
 
     res.json({
       success: true,

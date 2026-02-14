@@ -8,46 +8,58 @@ class CarDatabase {
 
   init() {
     return new Promise((resolve, reject) => {
-      this.db.run(`
-        CREATE TABLE IF NOT EXISTS inventory (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          source TEXT,
-          scraped_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          vin TEXT,
-          year INTEGER,
-          make TEXT,
-          model TEXT,
-          trim TEXT,
-          price REAL,
-          mileage INTEGER,
-          exterior_color TEXT,
-          interior_color TEXT,
-          body_type TEXT,
-          transmission TEXT,
-          drivetrain TEXT,
-          fuel_type TEXT,
-          engine TEXT,
-          engine_cylinders TEXT,
-          engine_displacement TEXT,
-          horsepower INTEGER,
-          mpg_city INTEGER,
-          mpg_highway INTEGER,
-          features TEXT,
-          description TEXT,
-          images TEXT,
-          dealer_name TEXT,
-          dealer_address TEXT,
-          dealer_phone TEXT,
-          dealer_email TEXT,
-          stock_number TEXT,
-          condition TEXT,
-          title_status TEXT,
-          url TEXT,
-          raw_data TEXT
-        );
-      `, (err) => {
-        if (err) reject(err);
-        else resolve();
+      this.db.serialize(() => {
+        this.db.run(`
+          CREATE TABLE IF NOT EXISTS inventory (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            source TEXT,
+            scraped_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            vin TEXT,
+            year INTEGER,
+            make TEXT,
+            model TEXT,
+            trim TEXT,
+            price REAL,
+            mileage INTEGER,
+            exterior_color TEXT,
+            interior_color TEXT,
+            body_type TEXT,
+            transmission TEXT,
+            drivetrain TEXT,
+            fuel_type TEXT,
+            engine TEXT,
+            engine_cylinders TEXT,
+            engine_displacement TEXT,
+            horsepower INTEGER,
+            mpg_city INTEGER,
+            mpg_highway INTEGER,
+            features TEXT,
+            description TEXT,
+            images TEXT,
+            dealer_name TEXT,
+            dealer_address TEXT,
+            dealer_phone TEXT,
+            dealer_email TEXT,
+            stock_number TEXT,
+            condition TEXT,
+            title_status TEXT,
+            url TEXT,
+            raw_data TEXT
+          );
+        `);
+
+        this.db.run('CREATE INDEX IF NOT EXISTS idx_inventory_scraped_at ON inventory(scraped_at DESC)');
+        this.db.run('CREATE INDEX IF NOT EXISTS idx_inventory_vin ON inventory(vin)');
+        this.db.run('CREATE INDEX IF NOT EXISTS idx_inventory_make_model ON inventory(make, model)');
+        this.db.run('CREATE INDEX IF NOT EXISTS idx_inventory_year ON inventory(year)');
+        this.db.run('CREATE INDEX IF NOT EXISTS idx_inventory_price ON inventory(price)');
+        this.db.run('CREATE INDEX IF NOT EXISTS idx_inventory_source ON inventory(source)');
+        this.db.run('CREATE INDEX IF NOT EXISTS idx_inventory_stock_number ON inventory(stock_number)');
+
+        this.db.get('PRAGMA user_version', (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
       });
     });
   }

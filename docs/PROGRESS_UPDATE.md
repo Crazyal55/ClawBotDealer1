@@ -1,96 +1,102 @@
 # Dealer Dev Ops - Progress Update
 
-## Changes Made
+## References
 
-### Runtime and Stability
-- Set active runtime to `server.js` (JS + SQLite).
-- Fixed startup scripts and dependency gaps in `package.json`.
-- Added real type checking (`npm run type-check`) and smoke gate (`npm run test:smoke`).
-- Added CI shortcut script: `npm run ci`.
+- Azure cloud runbook: `docs/AZURE_SETUP.md`
+- Project overview/run commands: `README.md`
 
-### PostgreSQL / SQL-First Setup
-- Added PostgreSQL bootstrap script: `scripts/init-postgres.js`.
-- Added scripts:
+## Current Implemented State
+
+### Runtime and Build Stability
+- Active default runtime is `server.js` (JS + SQLite).
+- PostgreSQL runtime path exists via `server_pg.js`.
+- CI-style local gate is active:
+  - `npm run type-check`
+  - `npm run test:smoke`
+  - `npm run ci`
+
+### SQL-First and Ingestion
+- PostgreSQL bootstrap is in place:
   - `npm run db:pg:init`
   - `npm run start:pg`
-- Fixed PostgreSQL seed/schema script compatibility in `docs/placeholder_data.sql` (moved index definitions to `CREATE INDEX` statements).
+- SQL schema script fixed and indexed in `docs/placeholder_data.sql`.
+- Ingestion hardening in `db_pg.js`:
+  - VIN upsert path
+  - non-VIN fallback matching
+  - validation helpers and normalization
+  - ingestion metrics returned: `inserted`, `updated`, `skipped`
+- API hardening in `server_pg.js`:
+  - explicit 400 validation handling
+  - scrape responses now include ingestion metrics
+  - unique conflict handling (409)
 
-### Frontend Navigation and Pages
-- Rebranded UI to **Dealer Dev Ops**.
-- Converted key sidebar items into separate pages:
+### API Surface Added/Expanded
+- `POST /api/inventory` (create)
+- `PUT /api/inventory/:id` (update)
+- `GET /api/dealerships/overview` (business/location rollups)
+- `GET /api/quality/verify` (data quality checks)
+- `GET /api/inventory` supports filters (`dealerId`, `locationId`, `make`, `model`, `drivetrain`, `minPrice`, `maxPrice`)
+
+### UI and Navigation
+- Sidebar pages are separated:
   - Dashboard
   - Scraper
   - Inventory
   - Quality
   - Database
+  - Dealerships
+  - Chatbot
   - Settings
-- Removed global top search bar and moved search to data-specific contexts.
-
-### Scraper Page
-- Added dedicated scraper page controls:
-  - Source Name
-  - Target URL
-  - Curl Command
-  - Scrape/Test/Batch actions (static placeholders)
-- Added URL preview feature:
-  - Auto-extract URL from curl
-  - Preview status text
-  - Embedded preview frame
-  - Open-in-new-tab link
-
-### Database Page
-- Added richer static sample table content.
-- Added field selector (column toggle) controls.
-- Added extra selectable fields including:
-  - Powertrain (FWD/RWD/AWD/4WD)
-  - Transmission
-  - Fuel
-  - Mileage
-  - Exterior Color
-  - Stock #
-  - Source
-  - Customer (new field)
-- Added table scroll behavior:
-  - Horizontal scrolling for wide columns
-  - Vertical scrolling with sticky table headers
-
-## Current Progress
-
-- App boots and passes local smoke checks.
-- Type-check gate is active and passing.
-- UI now supports static-sample-first development while scraper logic is being finalized.
-- SQL-first + hybrid direction is scaffolded:
-  - Relational side is set up.
-  - Vector/embedding layer is not implemented yet.
+- Database page:
+  - wide table with horizontal/vertical scroll
+  - sticky header
+  - selectable columns (including powertrain/customer)
+- Dealership page:
+  - live backend integration to `/api/dealerships/overview`
+  - business/location filters
+  - sort by vehicle count, quality, price
+- Chatbot:
+  - dedicated tab
+  - static chat simulator
+  - Settings includes chatbot dashboard and setup wizard sections
 
 ## Current Limitations
 
-- Inventory/Quality/Database pages still use static sample rows (intentional for current phase).
-- Scraper buttons are UI placeholders in the new page layout (not yet wired to all backend actions in-page).
-- URL preview may be blocked by site iframe policies for some domains.
+- Inventory/Quality/Database still use mostly static sample rendering (live wiring partial/in-progress).
+- Scraper page controls are mostly static UI (core scraper logic is being finalized separately).
+- Chatbot is simulator-only; no live model endpoint wired yet.
+- Vector/embedding storage and hybrid semantic retrieval are not implemented yet.
 
-## Next Steps
+## Azure-Ready Work Completed (No Live Azure Required)
 
-1. Finish scraper logic end-to-end
-- Validate curl parsing across more real dealer sources.
-- Add robust error handling and source-specific parsing fallbacks.
-- Wire scraper page buttons to backend endpoints with clear run logs.
+- Added Azure deployment runbook with concrete steps:
+  - `docs/AZURE_SETUP.md`
+- App/config prepared for cloud-style env-based setup:
+  - `DATABASE_URL` driven
+  - PostgreSQL init path scripted
+- Multi-business/location data model and API support implemented for cloud scaling path.
 
-2. Complete SQL ingestion workflow
-- Finalize mapping from scraped fields -> SQL schema.
-- Add upsert/dedupe rules (VIN + source fallback keys).
-- Add validation and quality-flag generation during ingestion.
+## Proposed Next Steps (No Live Azure Required)
 
-3. Move static pages to live data (when scraper is stable)
-- Wire Inventory tab to `/api/inventory`.
-- Wire Quality tab to quality endpoints/stats.
-- Wire Database tab to schema/query endpoints and keep field selector behavior.
+1. Finish frontend live data wiring to existing SQL APIs
+- Inventory page -> `/api/inventory`
+- Quality page -> `/api/quality/verify`
+- Database page -> live row feed + edit/update/delete hooks
 
-4. Start hybrid vector layer (after SQL is stable)
-- Add embeddings table/index strategy (pgvector or external vector DB).
-- Build SQL filter + semantic rerank pipeline.
-- Add sync jobs for new/updated/deleted vehicles.
+2. Complete scraper-to-ingestion UI wiring
+- Wire Scraper buttons to backend endpoints
+- Show scrape run logs + ingestion metrics inline
 
-5. Add delivery safeguards
-- Add basic frontend regression checks for tab routing and table controls.
-- Add backend integration tests for scrape -> save -> query flow.
+3. Add backend tests for ingestion guarantees
+- VIN upsert
+- non-VIN fallback behavior
+- validation 400 responses
+- scrape metric response shape
+
+4. Prepare Azure deploy automation artifacts
+- Add GitHub Actions workflow for build + deploy targets (staging/prod)
+- Add env templates for App Service settings/Key Vault references
+
+5. Start hybrid search scaffolding (still local/dev)
+- Create embedding schema/table scaffold
+- define retrieval contract (SQL filter first, semantic rerank second)
