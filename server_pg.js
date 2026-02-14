@@ -52,6 +52,23 @@ app.use((err, req, res, next) => {
 
 const db = new DatabasePG();
 
+function buildChatReply(message, context = {}) {
+  const text = String(message || '').toLowerCase();
+  const business = context.business || 'your dealership';
+  const location = context.location || 'your location';
+
+  if (text.includes('awd') || text.includes('4wd') || text.includes('snow') || text.includes('powertrain')) {
+    return `For ${business} (${location}), I can prioritize AWD/4WD inventory and return top quality options first.`;
+  }
+  if (text.includes('budget') || text.includes('under') || text.includes('price') || text.includes('$')) {
+    return `I can filter inventory for ${business} (${location}) by your budget, then rank by quality score and mileage.`;
+  }
+  if (text.includes('test drive') || text.includes('schedule')) {
+    return `I can prepare a test-drive handoff for ${business} (${location}) and attach this transcript to the customer record.`;
+  }
+  return `I can answer inventory questions for ${business} (${location}) using live SQL records (make/model/year/price/mileage/powertrain).`;
+}
+
 function handleApiError(res, error, defaultMessage) {
   if (error?.code === '23505') {
     return res.status(409).json({
@@ -310,6 +327,54 @@ app.get('/api/dealerships/overview', async (req, res) => {
   }
 });
 
+app.get('/api/chat/sessions', async (req, res) => {
+  try {
+    const limit = req.query.limit ? parseInt(req.query.limit, 10) : 25;
+    const sessions = await db.listRecentChatSessions(limit);
+    res.json({ success: true, sessions });
+  } catch (error) {
+    console.error('Error fetching chat sessions:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.post('/api/chat/sessions/:sessionKey/messages', async (req, res) => {
+  try {
+    const sessionKey = String(req.params.sessionKey || '').trim();
+    const message = String(req.body?.message || '').trim();
+    if (!sessionKey) {
+      return res.status(400).json({ success: false, message: 'sessionKey is required' });
+    }
+    if (!message) {
+      return res.status(400).json({ success: false, message: 'message is required' });
+    }
+
+    const session = await db.createOrUpdateChatSession(sessionKey, {
+      business: req.body?.business,
+      location: req.body?.location,
+      customer_name: req.body?.customer_name
+    });
+
+    await db.addChatMessage(session.id, 'user', message);
+    const reply = buildChatReply(message, {
+      business: session.business,
+      location: session.location
+    });
+    await db.addChatMessage(session.id, 'assistant', reply);
+
+    res.json({
+      success: true,
+      data: {
+        session_key: session.session_key,
+        reply
+      }
+    });
+  } catch (error) {
+    console.error('Error handling chat message:', error);
+    handleApiError(res, error, 'Chat message failed');
+  }
+});
+
 app.get('/api/quality/verify', async (req, res) => {
   try {
     const limit = req.query.limit ? parseInt(req.query.limit, 10) : 200;
@@ -407,6 +472,25 @@ app.get('/api/health', (req, res) => {
 app.get('/api/health/db', async (req, res) => {
   try {
     await db.pool.query('SELECT 1');
+    const requiredTables = ['vehicles', 'dealers', 'dealer_locations'];
+    const tableResult = await db.pool.query(`
+      SELECT table_name
+      FROM information_schema.tables
+      WHERE table_schema = 'public'
+        AND table_name = ANY($1)
+    `, [requiredTables]);
+    const existing = new Set(tableResult.rows.map((r) => r.table_name));
+    const missingTables = requiredTables.filter((name) => !existing.has(name));
+    if (missingTables.length) {
+      return res.status(503).json({
+        success: false,
+        status: 'unhealthy',
+        message: `Database schema incomplete: missing ${missingTables.join(', ')}`,
+        missingTables,
+        pool: db.getPoolStats(),
+        timestamp: new Date().toISOString()
+      });
+    }
     res.json({
       success: true,
       status: 'healthy',

@@ -96,6 +96,9 @@ app.post('/api/scrape', async (req, res) => {
     res.json({
       success: true,
       message: `Scraped ${result.cars.length} cars`,
+      source: result.source,
+      url: result.url,
+      cars: result.cars,
       data: saved
     });
   } catch (error) {

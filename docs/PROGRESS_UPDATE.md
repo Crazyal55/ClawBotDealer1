@@ -1,547 +1,99 @@
 # Dealer Dev Ops - Progress Update
 
-**Last Updated**: 2025-02-13
-
----
-
-## 🎯 **Current State: PRODUCTION READY** ✅
-
-**Status**: All core features complete, automated test suite built, CI/CD configured, deployment documentation ready.
-
-## Deployment Direction (Current)
-
-- Dealer Dev Ops app in this repository is VPS-hosted.
-- Azure resources are reserved for separate Dealer SaaS and chatbot properties.
-- VPS runbook: `docs/VPS_DEPLOY.md`
-
----
-
-## 📊 **Project Overview**
-
-**Platform**: Dealership Inventory Management & Web Scraping System
-**Architecture**: Full-stack Node.js application (Express + PostgreSQL/SQLite)
-**Crawler**: Production-ready with HTTP + Puppeteer auto-fallback
-**Testing**: Jest-based automated test suite (145+ test cases)
-**Deployment**: VPS-first deployment with optional Docker and systemd automation
-
----
-
-## 🏗️ **Current Architecture**
-
-### **Dual Runtime Support**
-1. **SQLite** (via `server.js`) - Local development
-2. **PostgreSQL** (via `server_pg.js`) - VPS production runtime
-3. **TypeScript API layer** (via `src/`) - Type-checked domain layer (inactive)
-
-### **Database Layer**
-- **SQLite** (`cars.db`) - For local development (server.js)
-- **PostgreSQL** (Azure) - For production (server_pg.js)
-- **Connection pooling** - Efficient pool management (5 connections, health checks)
-- **Normalization** - VIN, numbers, text fields validated before storage
-- **Upsert logic** - VIN-based deduplication
-
-### **Crawler System**
-**Status**: ✅ **CORE IMPLEMENTATION COMPLETE**
-
-**Modules Created** (4 files, 27KB):
-- `crawler/url-discoverer.js` - Auto-discovery of VDP/SRP pages
-- `crawler/request-queue.js` - Concurrency control + rate limiting
-- `crawler/session-manager.js` - Cookie/header persistence
-- `crawler/browser-renderer.js` - Puppeteer integration (auto-detection)
-
-**Main Orchestrator**: `crawler.js` (7,690 bytes)
-- HTTP → Puppeteer fallback mechanism
-- Configurable: maxPages, maxVehicles, concurrency, rateLimit, usePuppeteer
-- Progress tracking via callbacks
-
-### **API Endpoints** (`server.js` & `server_pg.js`)
-
-**Core Scraper**:
-- `GET /health` - Health check
-- `GET /api/inventory` - List all vehicles (with filters)
-- `POST /api/scrape` - Scrape from curl command
-- `POST /api/scrape/batch` - Batch scrape
-- `POST /api/test` - Test scrape (no save)
-
-**Crawler System** (new in latest commits):
-- `POST /api/crawl` - Start crawl job ✅
-- `GET /api/crawl/:jobId/status` - Check progress ✅
-- `GET /api/crawl/:jobId/results` - Get results ✅
-
-**Database Operations**:
-- `GET /api/inventory` - Advanced filtering (make, model, dealer, price, etc.)
-- `POST /api/inventory` - Create vehicle
-- `PUT /api/inventory/:id` - Update vehicle
-- `DELETE /api/inventory/:id` - Delete vehicle
-- `DELETE /api/inventory` - Clear all
-- `GET /api/stats` - Summary statistics
-- `GET /api/stats/duplicates` - Find duplicate VINs
-- `DELETE /api/inventory/duplicates` - Remove duplicates
-- `GET /api/inventory/vin/:vin` - Search by VIN
-
-**New PostgreSQL Endpoints** (`server_pg.js` only):
-- `GET /api/dealerships/overview` - Business/location rollups
-- `GET /api/quality/verify` - Data quality checks
-
-### **Security & Operations**
-- ✅ **Helmet.js** - HTTP security headers
-- ✅ **express-rate-limit** - API rate limiting (300 req/15min default)
-- ✅ **CORS validation** - Origin whitelist check
-- ✅ **Error handling** - 400/404/500 responses with validation
-
-### **Static UI** (`public/index.html` - 70KB)
-- Single-page app with sidebar navigation (8 sections)
-- Pages: Dashboard, Scraper, Inventory, Quality, Database, Dealerships, Chatbot, Settings
-- Grayscale design with embedded CSS
-- Placeholder content for development
-
-**Accessibility Improvements** (2025-02-13):
-- ✅ **Skip Link** - "Skip to main content" link for keyboard navigation
-- ✅ **ARIA Landmarks** - Added `role="navigation"`, `role="main"`, `role="banner"`
-- ✅ **Mobile Menu Toggle** - Hamburger menu for mobile navigation
-- ✅ **JavaScript Documentation** - Complete function reference in `public/JS_FUNCTIONS.md`
-
----
-
-## 🧪 **Test Suite Refactoring** ✅ (2025-02-13)
-
-**Major Refactoring**: Test suite simplified for maintainability (86.5% code reduction)
-
-**Changes**:
-- **Before**: 1,900 lines of test code (verbose, repetitive)
-- **After**: 257 lines of test code (focused, maintainable)
-- **Net Reduction**: 1,643 lines removed (86.5%)
-- **Test Execution**: 83% faster (30s → 5s)
-
-**Files Refactored**:
-- `tests/unit/scraper.test.js` - 761 → 125 lines
-- `tests/integration/api/scraper-endpoint.test.js` - 616 → 130 lines
-- `tests/teardown.js` - 38 → 16 lines
-- `server_pg.js` - Added module.exports for testing
-
-**Key Improvements**:
-1. ✅ **Exported app/server/db** - Proper test lifecycle management
-2. ✅ **Conditional server startup** - Only starts when run directly
-3. ✅ **Dynamic port allocation** - Tests use `app.listen(0)`
-4. ✅ **Focused test cases** - Critical paths only
-5. ✅ **Removed redundant tests** - Eliminated edge case overload
-
-**Code Quality**: ⭐⭐⭐⭐⭐ **95/100**
-- Maintainability: Improved
-- Execution speed: 83% faster
-- Coverage: Preserved (critical paths)
-- Production readiness: 100%
-
----
-
-## 🚀 **CI/CD Pipeline & Monitoring** ✅ (2025-02-13)
-
-**DevOps Infrastructure**: Complete automated deployment and monitoring system
-
-### **CI/CD Pipeline** (`.github/workflows/vps-deploy.yml`)
-- ✅ Automated testing on every push (Jest + coverage)
-- ✅ Coverage upload to Codecov
-- ✅ Zero-downtime deployment to VPS
-- ✅ Pre-deployment backups
-- ✅ Post-deployment health verification
-- ✅ Automatic rollback on failure
-- ✅ Environment support (dev/staging/prod)
-- ✅ Manual trigger via GitHub UI
-
-**GitHub Secrets Required**:
-- `VPS_HOST` - VPS hostname or IP
-- `VPS_USER` - SSH user (dealerdevops)
-- `VPS_PATH` - App directory (/opt/dealer-dev-ops)
-- `DB_BACKUP_PASS` - Database backup password
-
-### **Monitoring Dashboard** (`public/monitor.html`)
-- ✅ **Real-time metrics** - API, database, uptime
-- ✅ **Performance charts** - Response time, requests/min (Chart.js)
-- ✅ **Resource gauges** - CPU, memory, disk usage
-- ✅ **Status cards** - Overall health, backups, errors
-- ✅ **Events table** - Live system events
-- ✅ **Auto-refresh** - Updates every 30 seconds
-- ✅ **Responsive design** - Mobile-friendly
-
-**Access**: `https://your-domain.com/monitor.html`
-
-### **Documentation Created**:
-- `docs/MONITORING_AND_CICD.md` - Comprehensive setup guide (280+ lines)
-- `docs/CODE_REVIEW_2025-02-13.md` - Complete code review (350+ lines)
-- `docs/TEST_COVERAGE_UPDATE.md` - Test expansion summary
-
----
-
-## 📊 **Current Metrics** (2025-02-13)
-
-### **Test Suite**:
-- **Total Test Cases**: 10 focused tests (down from 140+ verbose tests)
-- **Execution Time**: ~5 seconds (83% improvement)
-- **Coverage**: Critical paths covered
-- **CI/CD**: Automated on every push
-
-### **Code Quality**:
-- **Lines of Code**: Reduced by 1,219 lines (net)
-- **Maintainability**: Significantly improved
-- **Production Ready**: ✅ YES
-- **Security Posture**: ⭐⭐⭐⭐⭐ (5/5 stars)
-
-### **Deployment Readiness**: 100%
-- ✅ Automated CI/CD pipeline
-- ✅ Real-time monitoring dashboard
-- ✅ Zero-downtime deployments
-- ✅ Automatic rollback capability
-- ✅ Comprehensive VPS documentation
-
----
-
-## 📝 **Recent Commits** (2025-02-13)
-
-1. **UI Accessibility** - Skip links, ARIA landmarks, mobile menu
-2. **Test Coverage Expansion** - +160 tests (305 total at peak)
-3. **Test Suite Refactoring** - 86.5% code reduction
-4. **CI/CD Pipeline** - Automated VPS deployment
-5. **Monitoring Dashboard** - Real-time metrics visualization
-6. **Documentation** - Comprehensive guides and reviews
-
----
-
-## 🎯 **Next Steps** (Post-Deployment)
-
-### **Immediate**:
-1. ✅ Deploy to VPS using CI/CD pipeline
-2. ✅ Configure GitHub Secrets
-3. ✅ Monitor dashboard for 24 hours
-4. ✅ Verify backup scripts running
-
-### **Short-Term** (Week 1):
-1. Add authentication to monitoring dashboard
-2. Configure external monitoring (Uptime Robot)
-3. Set up error tracking (Sentry)
-4. Test rollback procedure
-
-### **Long-Term** (Month 1-2):
-1. Add Prometheus + Grafana
-2. Implement advanced alerting
-3. Create runbooks for incidents
-4. Multi-environment CI/CD (dev → staging → prod)
-- ✅ **Mobile Menu Toggle** - Hamburger menu for mobile navigation
-- ✅ **Responsive Sidebar** - 280px max-width on mobile with slide-in animation
-- ✅ **JavaScript Documentation** - Complete function reference in `public/JS_FUNCTIONS.md`
-
----
-
-## 🧪 **Automated Test Suite** ✅
-
-**Framework**: Jest with Supertest
-**Status**: ✅ **COMPLETE - Ready to Run**
-
-**Test Files Created** (19 files, 141KB total):
-```
-tests/
-├── setup.js                    # Global test setup
-├── teardown.js                 # Global cleanup
-├── README.md                   # Usage guide (200+ lines)
-├── SUMMARY.md                  # Implementation details (500+ lines)
-├── fixtures/                   # Test data
-│   ├── html/                 # 4 real HTML pages
-│   │   ├── cars.com-srp.html
-│   │   ├── cars.com-vdp.html
-│   │   ├── autotrader-vdp.html
-│   │   └── spa-empty.html
-│   └── json/
-│       └── sample-vehicles.json
-├── helpers/                    # Test utilities
-│   ├── mock-http.js          # HTTP mocking (10 functions)
-│   └── db.js                # DB helpers (6 functions)
-├── unit/                      # Isolated module tests
-│   ├── crawler/
-│   │   ├── url-discoverer.test.js    (40+ tests)
-│   │   └── request-queue.test.js     (35+ tests)
-│   └── db/
-│       └── db_pg.test.js               (30+ tests)
-└── integration/                # Multi-module tests
-    └── api/
-        └── crawl-endpoint.test.js        (15+ tests)
-```
-
-**Test Scripts Added** (package.json):
-```json
-{
-  "test": "jest",
-  "test:watch": "jest --watch",
-  "test:coverage": "jest --coverage",
-  "test:unit": "jest tests/unit",
-  "test:integration": "jest tests/integration",
-  "test:e2e": "jest tests/e2e",
-  "test:ci": "jest --ci --coverage --maxWorkers=2"
-}
-```
-
-**Coverage Goals**:
-```javascript
-{
-  global: { branches: 70, functions: 75, lines: 75, statements: 75 },
-  './crawler/': { branches: 80, functions: 85, lines: 85, statements: 85 }
-}
-```
-
-**Test Statistics**:
-- **Total test cases**: 145+
-- **Unit tests**: 105+ (URLDiscoverer, RequestQueue, Database)
-- **Integration tests**: 15+ (API endpoints)
-- **E2E tests**: 20+ (manual, real HTTP)
-- **Helper utilities**: 16 functions
-
----
-
-## 🔧 **CI/CD Pipeline** ✅
-
-**Platform**: GitHub Actions
-**File**: `.github/workflows/test.yml`
-**Status**: ✅ **CONFIGURED**
-
-**Jobs**:
-1. **Test Job**:
-   - Ubuntu latest with PostgreSQL service container
-   - Runs: `npm run test:ci`
-   - Coverage upload to Codecov
-   - Artifacts: HTML coverage reports
-
-2. **E2E Job**:
-   - Puppeteer dependencies installed
-   - Real HTTP requests to live sites
-   - Manual trigger (can be skipped)
-
-3. **Type Check Job**:
-   - TypeScript type validation
-   - Fast feedback loop
-
-**Triggers**: Push to master/main, Pull requests
-**Estimated Time**: 3-5 minutes per run
-
----
-
-## 🐳 **Docker & Deployment** ✅
-
-**Files Created**:
-- `Dockerfile` - Multi-stage Node.js build
-- `.env.production.example` - Environment template
-- `.github/workflows/azure-webapp.yaml` - Azure deployment workflow
-
-**Dockerfile Features**:
-```dockerfile
-FROM node:18-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --production=false
-COPY . .
-EXPOSE 3000
-CMD ["npm", "start"]
-```
-
-**Azure Deployment**:
-- Web App for Linux (Node 18+)
-- PostgreSQL Flexible Server
-- Environment variables via Key Vault (recommended)
-- CI/CD via GitHub Actions
-
----
-
-## 📚 **Production Readiness Checklist**
-
-### Completed ✅
-- [x] Core scraper functionality
-- [x] Database normalization and upsert
-- [x] Advanced API filtering
-- [x] Crawler system with Puppeteer
-- [x] Automated test suite
-- [x] CI/CD pipeline
-- [x] Docker containerization
-- [x] Azure deployment documentation
-- [x] Security hardening (Helmet, rate limiting, CORS)
-- [x] Error handling and logging
-- [x] Data quality verification
-- [x] Health check endpoint
-- [x] Static UI pages (8 sections)
-
-### Known Limitations ⚠️
-- Job persistence (in-memory Map → lost on restart)
-- VIN validation (no ISO 3779 checksum)
-- Image download (URLs only)
-- WebSocket support (polling /status only)
-- robots.txt support
-- Adaptive rate limiting (learned from 429s)
-
----
-
-## 📈 **Recent Commits (2025-02-13)**
-
-### 1. Add comprehensive Jest automated test suite
-**Commit**: `76fa48d`
-**Files**: 18 changed, 3,762 insertions(+)
-**Summary**: Created complete Jest test suite with 145+ test cases
-
-### 2. Add Docker and Azure deployment configuration
-**Commit**: `19071c5`
-**Files**: 3 changed, 97 insertions(+)
-**Summary**: Dockerfile, Azure workflow, environment template
-
-### 3. Add security enhancements and update documentation
-**Commit**: `bfeabb9`
-**Files**: 6 changed, 233 insertions(+)
-**Summary**: CORS validation, rate limiting, progress docs
-
-### 4. Update package-lock.json with Jest and testing dependencies
-**Commit**: `6cd4c66`
-**Files**: 1 changed, 5,684 insertions(+)
-**Summary**: Jest, supertest, @types packages
-
-### 5. Update documentation with production readiness and CI/CD info
-**Commit**: `23b8886`
-**Files**: 2 changed, 13 insertions(+)
-**Summary**: Documented deployment options, environment variables
-
-### 6. Update local configuration and package.json
-**Commit**: `deb834a`
-**Files**: 2 changed, 3 insertions(+)
-**Summary**: Added git push to allowed commands
-
----
-
-## 🎬 **Summary**
-
-**Production Status**: ✅ **READY TO DEPLOY**
-
-**Total Commits This Session**: 6
-**Total Lines Added**: ~4,300
-**Files Created/Modified**: 30+
-
-**Next Recommendation**: Deploy to Azure App Service (follow `docs/AZURE_SETUP.md`)
-
----
-
-## 📚 **Deployment Readiness**
-
-**Environment Variables**:
-```bash
-# Required for PostgreSQL
-DATABASE_URL=postgresql://user:pass@host:port/database
-
-# Optional: CORS origins
-CORS_ORIGINS=https://example.com,https://another.com
-
-# Optional: Rate limiting
-RATE_LIMIT_MAX=300
-
-# Required for Puppeteer (if used)
-PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-```
-
-**Docker Command**:
-```bash
-docker build -t clawbot-dealer .
-docker run -p 3000:3000 clawbot-dealer
-```
-
-**Azure Deployment**:
-See: `docs/AZURE_SETUP.md`
-
-**Test Suite**:
-```bash
-# Run all tests
-npm test
-
-# Run with coverage
-npm run test:coverage
-
-# CI mode (parallel)
-npm run test:ci
-```
-
----
-
-## 🔮 **Security Features**
-
-- ✅ **Helmet.js** - HTTP security headers
-- ✅ **express-rate-limit** - 300 req/15min default
-- ✅ **CORS whitelist** - Configurable origin validation
-- ✅ **Error handling** - Explicit 400/404/500 responses
-- ✅ **Input validation** - URL, VIN, data types
-- ✅ **SQL injection prevention** - Parameterized queries
-- ✅ **Rate limiting** - Per IP/user
-- ✅ **Logging** - Structured console.log
-
----
-
-## 📝 **Documentation**
-
-### Main Docs
-- `README.md` - Project overview and quick start
-- `docs/PROGRESS_UPDATE.md` - This file
-- `docs/AZURE_SETUP.md` - Azure deployment guide
-- `ClaudeCodeScraper.md` - Crawler implementation details
-- `tests/README.md` - Test suite usage guide
-- `tests/SUMMARY.md` - Test implementation details
-
-### API Docs
-- OpenAPI/Swagger: Not yet implemented
-- Inline documentation: `README.md` API section
-
-### Code Quality
-- **TypeScript definitions**: `@types/` for all packages
-- **ESLint**: Configured via `npm run lint`
-- **Prettier**: Configured via `npm run format` / `npm run format:check`
-- **Style guide**: Airbnb (recommended)
-
----
-
-## 🚀 **Quick Commands**
-
-```bash
-# Development
-npm run dev                    # Nodemon with server_pg.js
-npm run start                  # Production server_pg.js
-npm run start:sqlite           # Legacy SQLite runtime (server.js)
-npm run start:pg               # Alias for server_pg.js
-
-# Database
-npm run db:pg:init             # Initialize PostgreSQL
-
-# Testing
-npm test                       # All tests
-npm run test:watch             # Watch mode
-npm run test:coverage           # Coverage report
-npm run test:unit              # Unit only
-npm run test:integration        # Integration only
-npm run test:ci               # CI mode
-
-# Quality
-npm run type-check             # TypeScript check
-npm run ci                     # lint + type-check + smoke test
-```
-
----
-
-## 🎯 **Deployment Priority**
-
-### High Priority
-1. ✅ **Job Persistence** - Move to PostgreSQL
-2. ✅ **Real-World Testing** - Test on dealership sites
-3. ⏳ **Jest Installation** - Resolve npm lock issue
-
-### Medium Priority
-4. ⏳ **WebSocket Support** - Real-time updates
-5. ⏳ **Dashboard UI** - Visual monitoring
-6. ⏳ **VIN Validation** - ISO 3779 checksums
-
-### Low Priority
-7. ⏳ **Image Download** - Store locally
-8. ⏳ **robots.txt Support** - Respect policies
-9. ⏳ **Proxy Rotation** - Large-scale crawling
-
----
-
-**Status**: ✅ **PRODUCTION READY** - Deploy to Azure when ready!
-
-**Last Review**: 2025-02-13 by Claude Sonnet 4.5
+Last updated: 2026-02-14
+
+## Current State
+
+Status: Active development. Core PostgreSQL runtime is functional with live inventory/dealership/quality routes, smoke health checks, and VPS deployment tooling.
+
+Runtime target:
+- Primary: `server_pg.js`
+- Legacy fallback: `server.js` (SQLite)
+
+## Implemented
+
+Backend:
+- Inventory CRUD in PostgreSQL runtime (`GET/POST/PUT/DELETE /api/inventory`).
+- Scrape save endpoints return ingestion metrics (`inserted`, `updated`, `skipped`).
+- Dealership overview endpoint (`GET /api/dealerships/overview`).
+- Data quality endpoint (`GET /api/quality/verify`).
+- DB health endpoint (`GET /api/health/db`) now checks required schema tables.
+- Chat scaffold endpoints:
+  - `GET /api/chat/sessions`
+  - `POST /api/chat/sessions/:sessionKey/messages`
+
+Database:
+- PostgreSQL pooling and runtime DB checks in place.
+- Ingestion uniqueness strategy includes VIN + `(dealer_id, stock_number)` when present.
+- Seed schema includes chat tables (`chat_sessions`, `chat_messages`).
+- Seed/index script updated to normalize duplicate stock numbers before unique index creation.
+
+Frontend:
+- Multi-page tab UX in `public/index.html`.
+- Live loaders for Inventory, Quality, Dealership, and Database tabs.
+- Database table supports field visibility control and row-level selection.
+- Database tab wired to live CRUD actions (add/edit/delete via API).
+- Chat tab includes simulator flow + backend scaffold call path.
+- Visible inline status/error messages added for key tabs.
+- Inline page script migrated to external `public/app.js`.
+- Inline event attributes removed; UI now uses JS event listeners (CSP-compatible).
+- No-op controls are explicitly disabled/labeled as \"Coming Soon\".
+
+DevOps/CI:
+- Smoke script defaults to `GET /api/health/db`.
+- CI workflow includes smoke health check against DB health endpoint.
+- Type-check step in CI is no longer `continue-on-error`.
+- VPS docs/scripts exist for deploy, service, nginx, backups, and health monitoring.
+
+## Verified Recently
+
+Validated locally on 2026-02-14:
+- `npm run type-check` passed.
+- `npm run db:pg:init` passed (with local PostgreSQL at `summit_auto`).
+- `npm run test:smoke` passed against `/api/health/db` on a non-conflicting port.
+
+## Known Issues / Risks
+
+1. UI contains multiple placeholder buttons with no handlers (looks broken to users).
+- Example locations:
+  - `public/index.html:923`
+  - `public/index.html:999`
+  - `public/index.html:1065`
+  - `public/index.html:1112`
+  - `public/index.html:1183`
+  - `public/index.html:1235`
+  - `public/index.html:1298`
+  - `public/index.html:1322`
+
+2. Security tradeoff currently active for UI compatibility.
+- Mitigated: frontend was refactored to remove inline handlers/script and CSP can remain enabled.
+
+3. Progress/documentation drift existed and must be maintained continuously.
+- Previous progress doc had encoding corruption and outdated claims.
+
+4. Local test environment may miss dev dependencies if `npm install` was not run.
+- In one local run, integration tests could not execute because `jest` was not available in shell PATH.
+
+## Recommended Next Steps
+
+1. Convert UI from inline `onclick`/inline script to external JS event listeners.
+- Then re-enable strict CSP in `helmet`.
+
+2. Wire or disable placeholder buttons.
+- If not implemented yet, mark as disabled with clear "Coming soon" labels.
+
+3. Add backend integration coverage for new chat + health schema checks.
+- Keep tests isolated from scraper work and DB side effects.
+
+4. Keep docs synchronized with runtime reality.
+- Update this file and README when endpoints/behavior change.
+
+## References
+
+- Runtime/API: `server_pg.js`
+- DB layer: `db_pg.js`
+- Seed schema: `docs/placeholder_data.sql`
+- Frontend UI: `public/index.html`
+- CI workflow: `.github/workflows/test.yml`
+- Smoke check: `scripts/smoke-health.js`
+- VPS deploy guide: `docs/VPS_DEPLOY.md`

@@ -359,6 +359,13 @@
             font-size: 10px;
             font-weight: 600;
         }
+        .btn[disabled] {
+            opacity: 0.55;
+            cursor: not-allowed;
+            pointer-events: none;
+            border-color: var(--border-subtle);
+            color: var(--text-disabled);
+        }
 
         /* Content Area */
         .content-area {
@@ -648,6 +655,15 @@
             display: grid;
             gap: var(--spacing-sm);
         }
+        .inline-status {
+            margin-top: var(--spacing-sm);
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        #db-vehicles-table tbody tr.row-selected {
+            outline: 2px solid rgba(11, 121, 89, 0.65);
+            background: rgba(11, 121, 89, 0.08);
+        }
 
         /* Option Tabs */
         .option-tabs {
@@ -808,7 +824,7 @@
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
     <!-- Mobile Sidebar Overlay -->
-    <div class="sidebar-overlay" onclick="closeMobileMenu()"></div>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
     <!-- Sidebar -->
     <aside class="sidebar" role="navigation" aria-label="Main navigation">
@@ -822,28 +838,28 @@
         <nav class="sidebar-nav">
             <div class="nav-section">
                 <div class="nav-label">Core</div>
-                <div class="nav-item active" onclick="selectTab('dashboard', this)">
-                    <span>📊</span>
+                <div class="nav-item active" data-tab="dashboard">
+                    <span>[D]</span>
                     Dashboard
                     <span class="nav-indicator active"></span>
                 </div>
-                <div class="nav-item" onclick="selectTab('scraper', this)">
-                    <span>ðŸ“¥</span>
+                <div class="nav-item" data-tab="scraper">
+                    <span>[S]</span>
                     Scraper
                 </div>
-                <div class="nav-item" onclick="selectTab('inventory', this)">
-                    <span>🚗</span>
+                <div class="nav-item" data-tab="inventory">
+                    <span>[I]</span>
                     Inventory
                 </div>
-                <div class="nav-item" onclick="selectTab('quality', this)">
-                    <span>✓</span>
+                <div class="nav-item" data-tab="quality">
+                    <span>[Q]</span>
                     Quality
                 </div>
-                <div class="nav-item" onclick="selectTab('database', this)">
-                    <span>🗄️</span>
+                <div class="nav-item" data-tab="database">
+                    <span>[DB]</span>
                     Database
                 </div>
-                <div class="nav-item" onclick="selectTab('dealership', this)">
+                <div class="nav-item" data-tab="dealership">
                     <span>Deal</span>
                     Dealerships
                 </div>
@@ -852,17 +868,17 @@
             <div class="nav-section">
                 <div class="nav-label">AI Features</div>
                 <div class="nav-item coming-soon">
-                    <span>⚡</span>
+                    <span>[E]</span>
                     Embeddings
                     <span class="nav-indicator"></span>
                 </div>
                 <div class="nav-item coming-soon">
-                    <span>🎯</span>
+                    <span>[V]</span>
                     Vector DB
                     <span class="nav-indicator"></span>
                 </div>
                 <div class="nav-item coming-soon">
-                    <span>📈</span>
+                    <span>[SV]</span>
                     Semantic Viz
                     <span class="nav-indicator"></span>
                 </div>
@@ -870,22 +886,22 @@
 
             <div class="nav-section">
                 <div class="nav-label">Platform</div>
-                <div class="nav-item" onclick="selectTab('chatbot', this)">
+                <div class="nav-item" data-tab="chatbot">
                     <span>Chat</span>
                     Chatbot
                 </div>
                 <div class="nav-item coming-soon">
-                    <span>👥</span>
+                    <span>[C]</span>
                     Customers
                     <span class="nav-indicator"></span>
                 </div>
                 <div class="nav-item coming-soon">
-                    <span>📈</span>
+                    <span>[A]</span>
                     Analytics
                     <span class="nav-indicator"></span>
                 </div>
-                <div class="nav-item" onclick="selectTab('settings', this)">
-                    <span>⚙️</span>
+                <div class="nav-item" data-tab="settings">
+                    <span>[SET]</span>
                     Settings
                 </div>
             </div>
@@ -905,18 +921,18 @@
         <!-- Top Bar -->
         <header class="top-bar" role="banner">
             <div class="top-bar-left">
-                <button class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Toggle navigation menu">
-                    ☰
+                <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Toggle navigation menu">
+                    ===
                 </button>
                 <h1 class="panel-title">Dealer Dev Ops</h1>
             </div>
             <div class="top-bar-right">
-                <button class="btn btn-secondary">
+                <button class="btn btn-secondary" disabled title="Coming soon">
                     Import Data
-                    <span class="badge">New</span>
+                    <span class="badge">Coming Soon</span>
                 </button>
-                <button class="btn btn-primary">
-                    New Source
+                <button class="btn btn-primary" disabled title="Coming soon">
+                    New Source (Coming Soon)
                 </button>
             </div>
         </header>
@@ -927,7 +943,7 @@
                     <div class="stat-card">
                         <div class="stat-header">
                             <span class="stat-title">Quality Score</span>
-                            <span class="stat-trend up">↑ 3.2%</span>
+                            <span class="stat-trend up">+3.2%</span>
                         </div>
                         <div class="stat-value">87%</div>
                         <div class="stat-label">Average across 59 vehicles</div>
@@ -936,7 +952,7 @@
                     <div class="stat-card">
                         <div class="stat-header">
                             <span class="stat-title">Vehicles</span>
-                            <span class="stat-trend up">↑ 12</span>
+                            <span class="stat-trend up">+12</span>
                         </div>
                         <div class="stat-value">59</div>
                         <div class="stat-label">Total inventory</div>
@@ -945,16 +961,16 @@
                     <div class="stat-card">
                         <div class="stat-header">
                             <span class="stat-title">High Quality</span>
-                            <span class="stat-trend up">↑ 5</span>
+                            <span class="stat-trend up">+5</span>
                         </div>
                         <div class="stat-value">42</div>
-                        <div class="stat-label">Quality score ≥ 80%</div>
+                        <div class="stat-label">Quality score >= 80%</div>
                         <div class="stat-bar"><div class="stat-bar-fill" style="width: 71%"></div></div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-header">
                             <span class="stat-title">Issues</span>
-                            <span class="stat-trend down">↓ 2</span>
+                            <span class="stat-trend down">-2</span>
                         </div>
                         <div class="stat-value">7</div>
                         <div class="stat-label">Flagged for review</div>
@@ -987,7 +1003,7 @@
                 <div class="content-panel">
                     <div class="panel-header">
                         <h2 class="panel-title">Scraper</h2>
-                        <div class="panel-actions"><button class="btn btn-primary">New Source</button></div>
+                        <div class="panel-actions"><button class="btn btn-primary" disabled title="Coming soon">New Source (Coming Soon)</button></div>
                     </div>
                     <p class="panel-subtitle">Dedicated scraping page for source setup and batch runs.</p>
                     <div style="display: grid; gap: var(--spacing-md); margin-top: var(--spacing-lg);">
@@ -1003,7 +1019,7 @@
                                 class="search-input"
                                 placeholder="https://example.com/inventory"
                                 style="max-width: 100%;"
-                                oninput="updateScraperPreview()"
+                                
                             >
                         </div>
                         <div style="background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: var(--spacing-lg);">
@@ -1014,7 +1030,7 @@
                                 rows="6"
                                 placeholder="Paste curl command here..."
                                 style="padding-left: var(--spacing-md); resize: vertical;"
-                                oninput="updateScraperPreview()"
+                                
                             ></textarea>
                         </div>
                         <div style="background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: var(--spacing-lg);">
@@ -1028,9 +1044,9 @@
                             <iframe id="scraper-preview-frame" class="preview-frame" title="Scraper URL Preview"></iframe>
                         </div>
                         <div style="display: flex; gap: var(--spacing-sm);">
-                            <button id="scraper-btn-save" class="btn btn-primary" onclick="runScrapeAction('save')">Scrape & Add</button>
-                            <button id="scraper-btn-test" class="btn btn-secondary" onclick="runScrapeAction('test')">Test Scrape</button>
-                            <button id="scraper-btn-batch" class="btn btn-secondary" onclick="runScrapeAction('batch')">Batch Scrape</button>
+                            <button id="scraper-btn-save" class="btn btn-primary">Scrape & Add</button>
+                            <button id="scraper-btn-test" class="btn btn-secondary">Test Scrape</button>
+                            <button id="scraper-btn-batch" class="btn btn-secondary">Batch Scrape</button>
                         </div>
                         <div style="background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: var(--spacing-lg);">
                             <div style="font-size: 12px; color: var(--text-muted); margin-bottom: var(--spacing-sm);">Run Status</div>
@@ -1053,12 +1069,13 @@
                 <div class="content-panel">
                     <div class="panel-header">
                         <h2 class="panel-title">Inventory</h2>
-                        <div class="panel-actions"><button class="btn btn-secondary">Export CSV</button><button class="btn btn-secondary">Filter</button></div>
+                        <div class="panel-actions"><button id="inventory-export-csv-btn" class="btn btn-secondary">Export CSV</button><button class="btn btn-secondary" disabled title="Coming soon">Filter (Coming Soon)</button></div>
                     </div>
                     <p class="panel-subtitle">Inventory page with row-level browsing.</p>
                     <div class="table-toolbar">
-                        <input id="inventory-search-input" type="text" class="search-input" placeholder="Search inventory rows..." oninput="filterInventoryRows(this.value)">
+                        <input id="inventory-search-input" type="text" class="search-input" placeholder="Search inventory rows...">
                     </div>
+                    <div id="inventory-status" class="inline-status">Loading inventory...</div>
                     <div class="table-wrap">
                         <table class="data-table">
                             <thead><tr><th>VIN</th><th>Make</th><th>Model</th><th>Year</th><th>Miles</th><th>Price</th><th>Source</th></tr></thead>
@@ -1072,7 +1089,7 @@
                 <div class="content-panel">
                     <div class="panel-header">
                         <h2 class="panel-title">Quality</h2>
-                        <div class="panel-actions"><button class="btn btn-secondary">Recalculate</button></div>
+                        <div class="panel-actions"><button id="quality-recalculate-btn" class="btn btn-secondary">Recalculate</button></div>
                     </div>
                     <p class="panel-subtitle">Quality score and issue tracking by vehicle.</p>
                     <div class="split-grid">
@@ -1085,6 +1102,7 @@
                             <div id="quality-scanned-count" class="info-value">-</div>
                         </div>
                     </div>
+                    <div id="quality-status" class="inline-status">Loading quality scan...</div>
                     <div class="table-wrap">
                         <table class="data-table">
                             <thead><tr><th>VIN</th><th>Score</th><th>Severity</th><th>Flags</th></tr></thead>
@@ -1098,7 +1116,7 @@
                 <div class="content-panel">
                     <div class="panel-header">
                         <h2 class="panel-title">Database</h2>
-                        <div class="panel-actions"><button class="btn btn-secondary">Export Data</button><button class="btn btn-secondary">Run Query</button></div>
+                        <div class="panel-actions"><button class="btn btn-secondary" disabled title="Coming soon">Export Data (Coming Soon)</button><button class="btn btn-secondary" disabled title="Coming soon">Run Query (Coming Soon)</button></div>
                     </div>
                     <p class="panel-subtitle">View relational data and inspect indexed inventory rows.</p>
                     <div class="split-grid">
@@ -1112,7 +1130,11 @@
                         </div>
                     </div>
                     <div class="table-toolbar" style="margin-top: var(--spacing-lg);">
-                        <input id="db-table-search" type="text" class="search-input" placeholder="Search DB rows by VIN, make, model, body type..." oninput="filterDatabaseTable(this.value)">
+                        <input id="db-table-search" type="text" class="search-input" placeholder="Search DB rows by VIN, make, model, body type...">
+                        <button id="database-refresh-btn" class="btn btn-secondary">Refresh</button>
+                        <button id="database-add-btn" class="btn btn-primary">Add Vehicle</button>
+                        <button id="database-edit-btn" class="btn btn-secondary">Edit Selected</button>
+                        <button id="database-delete-btn" class="btn btn-secondary">Delete Selected</button>
                         <div class="field-picker" id="db-field-picker">
                             <label class="field-pill"><input type="checkbox" data-field="vin" checked>VIN</label>
                             <label class="field-pill"><input type="checkbox" data-field="year" checked>Year</label>
@@ -1132,6 +1154,7 @@
                             <label class="field-pill"><input type="checkbox" data-field="quality" checked>Quality</label>
                         </div>
                     </div>
+                    <div id="database-status" class="inline-status">Select a row to edit or delete.</div>
                     <div class="table-wrap db-table-wrap">
                         <table class="data-table" id="db-vehicles-table">
                             <thead>
@@ -1154,23 +1177,7 @@
                                     <th data-col="quality">Quality</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr>
-                                    <td data-col="vin">1FTFW1E57MFA12345</td><td data-col="year">2021</td><td data-col="make">Ford</td><td data-col="model">F-150</td><td data-col="trim">XLT</td><td data-col="body">Pickup Truck</td><td data-col="powertrain">4WD</td><td data-col="transmission">10-Speed Auto</td><td data-col="fuel">Gasoline</td><td data-col="mileage">45,200</td><td data-col="color">Oxford White</td><td data-col="stock">DEN451234</td><td data-col="source">Cars.com</td><td data-col="customer">Open Lead</td><td data-col="price">$38,995</td><td data-col="quality">92</td>
-                                </tr>
-                                <tr>
-                                    <td data-col="vin">2T1BURHE1GC112345</td><td data-col="year">2019</td><td data-col="make">Toyota</td><td data-col="model">RAV4</td><td data-col="trim">XLE</td><td data-col="body">SUV</td><td data-col="powertrain">AWD</td><td data-col="transmission">8-Speed Auto</td><td data-col="fuel">Gasoline</td><td data-col="mileage">38,450</td><td data-col="color">Celestial Silver</td><td data-col="stock">DEN234567</td><td data-col="source">AutoTrader</td><td data-col="customer">Sarah M.</td><td data-col="price">$26,995</td><td data-col="quality">88</td>
-                                </tr>
-                                <tr>
-                                    <td data-col="vin">JM1BK3240L0123456</td><td data-col="year">2022</td><td data-col="make">Mazda</td><td data-col="model">CX-5</td><td data-col="trim">Grand Touring</td><td data-col="body">SUV</td><td data-col="powertrain">AWD</td><td data-col="transmission">6-Speed Auto</td><td data-col="fuel">Gasoline</td><td data-col="mileage">22,100</td><td data-col="color">Machine Gray</td><td data-col="stock">DEN345678</td><td data-col="source">Cars.com</td><td data-col="customer">Open Lead</td><td data-col="price">$33,495</td><td data-col="quality">95</td>
-                                </tr>
-                                <tr>
-                                    <td data-col="vin">5YJ3E1E8JF123456</td><td data-col="year">2020</td><td data-col="make">Tesla</td><td data-col="model">Model 3</td><td data-col="trim">Long Range</td><td data-col="body">Sedan</td><td data-col="powertrain">RWD</td><td data-col="transmission">Single Speed</td><td data-col="fuel">Electric</td><td data-col="mileage">34,200</td><td data-col="color">Solid Black</td><td data-col="stock">DEN890123</td><td data-col="source">Dealer API</td><td data-col="customer">Michael R.</td><td data-col="price">$32,995</td><td data-col="quality">90</td>
-                                </tr>
-                                <tr>
-                                    <td data-col="vin">2HGFC3F53KH523456</td><td data-col="year">2019</td><td data-col="make">Honda</td><td data-col="model">Civic</td><td data-col="trim">Touring</td><td data-col="body">Sedan</td><td data-col="powertrain">FWD</td><td data-col="transmission">CVT</td><td data-col="fuel">Gasoline</td><td data-col="mileage">41,500</td><td data-col="color">Polished Metal</td><td data-col="stock">DEN901234</td><td data-col="source">Cars.com</td><td data-col="customer">Open Lead</td><td data-col="price">$22,995</td><td data-col="quality">89</td>
-                                </tr>
-                            </tbody>
+                            <tbody id="db-vehicles-table-body"></tbody>
                         </table>
                     </div>
                 </div>
@@ -1180,17 +1187,18 @@
                 <div class="content-panel">
                     <div class="panel-header">
                         <h2 class="panel-title">Dealership Navigation</h2>
-                        <div class="panel-actions"><button class="btn btn-secondary">Refresh Snapshot</button></div>
+                        <div class="panel-actions"><button class="btn btn-secondary" disabled title="Coming soon">Refresh Snapshot (Coming Soon)</button></div>
                     </div>
                     <p class="panel-subtitle">Sort and filter by business, location, and operating measures.</p>
+                    <div id="dealership-status" class="inline-status">Loading dealership overview...</div>
                     <div class="table-toolbar">
-                        <select id="dealership-business-filter" class="env-selector" onchange="applyDealershipFilters()">
+                        <select id="dealership-business-filter" class="env-selector">
                             <option value="">All Businesses</option>
                         </select>
-                        <select id="dealership-location-filter" class="env-selector" onchange="applyDealershipFilters()">
+                        <select id="dealership-location-filter" class="env-selector">
                             <option value="">All Locations</option>
                         </select>
-                        <select id="dealership-sort-field" class="env-selector" onchange="applyDealershipFilters()">
+                        <select id="dealership-sort-field" class="env-selector">
                             <option value="vehicle_count">Sort: Vehicle Count</option>
                             <option value="avg_quality">Sort: Avg Quality</option>
                             <option value="avg_price">Sort: Avg Price</option>
@@ -1231,7 +1239,7 @@
                 <div class="content-panel">
                     <div class="panel-header">
                         <h2 class="panel-title">Chatbot</h2>
-                        <div class="panel-actions"><button class="btn btn-primary">Start Test Chat</button></div>
+                        <div class="panel-actions"><button class="btn btn-primary" disabled title="Coming soon">Start Test Chat (Coming Soon)</button></div>
                     </div>
                     <p class="panel-subtitle">Inventory-aware assistant (starter profile: ChatGPT Nano or equivalent model).</p>
                     <div class="split-grid">
@@ -1259,9 +1267,10 @@
 
                     <div class="panel-header" style="margin-top: var(--spacing-lg);">
                         <h2 class="panel-title">Static Chat Simulator</h2>
-                        <div class="panel-actions"><button class="btn btn-secondary" onclick="resetChatSimulator()">Reset</button></div>
+                        <div class="panel-actions"><button id="chat-reset-btn" class="btn btn-secondary">Reset</button></div>
                     </div>
                     <p class="panel-subtitle">Demo conversation flow before backend model wiring.</p>
+                    <div id="chat-status" class="inline-status">Chat API scaffold mode.</div>
 
                     <div class="table-toolbar">
                         <select id="chat-sim-business" class="env-selector">
@@ -1279,10 +1288,10 @@
                     <div class="chat-sim-wrap">
                         <div id="chat-sim-log" class="chat-log"></div>
                         <div class="chat-controls">
-                            <input id="chat-sim-input" type="text" class="search-input" placeholder="Ask about inventory, price range, AWD options, etc." onkeydown="if(event.key==='Enter'){sendChatSimulatorMessage();}">
+                            <input id="chat-sim-input" type="text" class="search-input" placeholder="Ask about inventory, price range, AWD options, etc.">
                             <div style="display: flex; gap: var(--spacing-sm);">
-                                <button class="btn btn-primary" onclick="sendChatSimulatorMessage()">Send</button>
-                                <button class="btn btn-secondary" onclick="simulateLeadHandoff()">Simulate Lead Handoff</button>
+                                <button id="chat-send-btn" class="btn btn-primary">Send</button>
+                                <button id="chat-handoff-btn" class="btn btn-secondary">Simulate Lead Handoff</button>
                             </div>
                         </div>
                     </div>
@@ -1293,7 +1302,7 @@
                 <div class="content-panel">
                     <div class="panel-header">
                         <h2 class="panel-title">Settings</h2>
-                        <div class="panel-actions"><button class="btn btn-primary">Save</button></div>
+                        <div class="panel-actions"><button class="btn btn-primary" disabled title="Coming soon">Save (Coming Soon)</button></div>
                     </div>
                     <p class="panel-subtitle">Static configuration placeholders while scraper logic is being finished.</p>
                     <div class="split-grid">
@@ -1317,7 +1326,7 @@
 
                     <div class="panel-header" style="margin-top: var(--spacing-lg);">
                         <h2 class="panel-title">Chatbot Dashboard</h2>
-                        <div class="panel-actions"><button class="btn btn-secondary">Export Transcripts</button></div>
+                        <div class="panel-actions"><button class="btn btn-secondary" disabled title="Coming soon">Export Transcripts (Coming Soon)</button></div>
                     </div>
                     <p class="panel-subtitle">Monitor conversations, customer interactions, and setup wizard progress.</p>
 
@@ -1363,542 +1372,10 @@
         </div>
     </main>
 
-    <script>
-        // Mobile Menu Toggle
-        function toggleMobileMenu() {
-            const sidebar = document.querySelector('.sidebar');
-            const overlay = document.querySelector('.sidebar-overlay');
-            if (sidebar && overlay) {
-                sidebar.classList.toggle('mobile-open');
-                overlay.classList.toggle('active');
-            }
-        }
-
-        function closeMobileMenu() {
-            const sidebar = document.querySelector('.sidebar');
-            const overlay = document.querySelector('.sidebar-overlay');
-            if (sidebar && overlay) {
-                sidebar.classList.remove('mobile-open');
-                overlay.classList.remove('active');
-            }
-        }
-
-        function selectTab(tabName, element) {
-            document.querySelectorAll('.nav-item').forEach((item) => {
-                item.classList.remove('active');
-                const indicator = item.querySelector('.nav-indicator');
-                if (indicator) indicator.classList.remove('active');
-            });
-
-            if (element) {
-                element.classList.add('active');
-                const indicator = element.querySelector('.nav-indicator');
-                if (indicator) indicator.classList.add('active');
-            }
-
-            const route = tabName;
-            const pages = ['dashboard', 'scraper', 'inventory', 'quality', 'database', 'dealership', 'chatbot', 'settings'];
-            pages.forEach((name) => {
-                const page = document.getElementById(`page-${name}`);
-                if (page) page.style.display = name === route ? 'block' : 'none';
-            });
-
-            // Close mobile menu after selecting a tab
-            closeMobileMenu();
-
-            if (route === 'dealership') {
-                loadDealershipOverview();
-                applyDealershipFilters();
-            }
-            if (route === 'inventory') {
-                loadInventoryRows();
-            }
-            if (route === 'quality') {
-                loadQualityRows();
-            }
-        }
-
-        let inventoryRowsCache = [];
-
-        function textValue(value) {
-            if (value === null || value === undefined || value === '') return '-';
-            return String(value);
-        }
-
-        function formatMiles(value) {
-            const n = Number(value);
-            return Number.isFinite(n) ? n.toLocaleString() : '-';
-        }
-
-        function filterInventoryRows(searchValue) {
-            const value = (searchValue || '').toLowerCase().trim();
-            const rows = document.querySelectorAll('#inventory-table-body tr');
-            rows.forEach((row) => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(value) ? '' : 'none';
-            });
-        }
-
-        async function loadInventoryRows() {
-            const tbody = document.getElementById('inventory-table-body');
-            if (!tbody) return;
-
-            try {
-                const response = await fetch('/api/inventory');
-                if (!response.ok) throw new Error('Inventory API unavailable');
-                const rows = await response.json();
-                if (!Array.isArray(rows)) throw new Error('Unexpected inventory response');
-
-                inventoryRowsCache = rows;
-                tbody.innerHTML = '';
-
-                rows.slice(0, 200).forEach((row) => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${textValue(row.vin)}</td>
-                        <td>${textValue(row.make)}</td>
-                        <td>${textValue(row.model)}</td>
-                        <td>${textValue(row.year)}</td>
-                        <td>${formatMiles(row.mileage)}</td>
-                        <td>${formatCurrency(row.price)}</td>
-                        <td>${textValue(row.source)}</td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-
-                if (!rows.length) {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = '<td colspan="7">No inventory rows returned.</td>';
-                    tbody.appendChild(tr);
-                }
-            } catch (error) {
-                // Keep existing rows if backend call fails.
-            }
-        }
-
-        async function loadQualityRows() {
-            const tbody = document.getElementById('quality-table-body');
-            const flagged = document.getElementById('quality-flagged-count');
-            const scanned = document.getElementById('quality-scanned-count');
-            if (!tbody || !flagged || !scanned) return;
-
-            try {
-                const response = await fetch('/api/quality/verify?limit=200');
-                if (!response.ok) throw new Error('Quality API unavailable');
-                const payload = await response.json();
-                if (!payload.success) throw new Error(payload.message || 'Quality fetch failed');
-
-                const findings = Array.isArray(payload.findings) ? payload.findings : [];
-                flagged.textContent = String(payload.flagged ?? findings.length);
-                scanned.textContent = String(payload.scanned ?? 0);
-
-                tbody.innerHTML = '';
-                findings.slice(0, 200).forEach((item) => {
-                    const issues = Array.isArray(item.issues) ? item.issues : [];
-                    const severity = issues.length >= 3 ? 'Error' : issues.length ? 'Warning' : 'Info';
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${textValue(item.vin)}</td>
-                        <td>${Math.max(0, 100 - issues.length * 20)}</td>
-                        <td>${severity}</td>
-                        <td>${issues.length ? issues.join(', ') : 'None'}</td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-
-                if (!findings.length) {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = '<td colspan="4">No quality issues detected.</td>';
-                    tbody.appendChild(tr);
-                }
-            } catch (error) {
-                // Keep existing rows if backend call fails.
-            }
-        }
-
-        function filterDatabaseTable(searchValue) {
-            const value = (searchValue || '').toLowerCase().trim();
-            const rows = document.querySelectorAll('#db-vehicles-table tbody tr');
-
-            rows.forEach((row) => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(value) ? '' : 'none';
-            });
-        }
-
-        function applyDatabaseFieldVisibility() {
-            const checkboxes = document.querySelectorAll('#db-field-picker input[type="checkbox"][data-field]');
-            checkboxes.forEach((checkbox) => {
-                const field = checkbox.getAttribute('data-field');
-                const visible = checkbox.checked;
-                const cells = document.querySelectorAll(`#db-vehicles-table [data-col="${field}"]`);
-                cells.forEach((cell) => {
-                    cell.style.display = visible ? '' : 'none';
-                });
-            });
-        }
-
-        function initDatabaseFieldPicker() {
-            const checkboxes = document.querySelectorAll('#db-field-picker input[type="checkbox"][data-field]');
-            checkboxes.forEach((checkbox) => {
-                checkbox.addEventListener('change', applyDatabaseFieldVisibility);
-            });
-            applyDatabaseFieldVisibility();
-        }
-
-        function parseDealershipMetric(row, field) {
-            const raw = row.getAttribute(`data-${field}`);
-            const value = Number(raw);
-            return Number.isFinite(value) ? value : 0;
-        }
-
-        function formatCurrency(value) {
-            const n = Number(value);
-            if (!Number.isFinite(n)) return '$0';
-            return `$${n.toLocaleString()}`;
-        }
-
-        function safePercent(value) {
-            const n = Number(value);
-            if (!Number.isFinite(n)) return '0%';
-            return `${Math.max(0, Math.min(100, Math.round(n)))}%`;
-        }
-
-        function populateSelectOptions(selectId, values, placeholder) {
-            const select = document.getElementById(selectId);
-            if (!select) return;
-            const current = select.value;
-            select.innerHTML = '';
-
-            const base = document.createElement('option');
-            base.value = '';
-            base.textContent = placeholder;
-            select.appendChild(base);
-
-            values.forEach((value) => {
-                const option = document.createElement('option');
-                option.value = value;
-                option.textContent = value;
-                select.appendChild(option);
-            });
-
-            if (current && values.includes(current)) {
-                select.value = current;
-            }
-        }
-
-        async function loadDealershipOverview() {
-            try {
-                const response = await fetch('/api/dealerships/overview');
-                if (!response.ok) return;
-                const payload = await response.json();
-                if (!payload.success) return;
-
-                const businesses = Array.isArray(payload.businesses) ? payload.businesses : [];
-                const locations = Array.isArray(payload.locations) ? payload.locations : [];
-                const businessMap = new Map(businesses.map((b) => [String(b.id), b]));
-                const tbody = document.getElementById('dealership-table-body');
-                if (!tbody || locations.length === 0) return;
-
-                tbody.innerHTML = '';
-                const businessNames = new Set();
-                const locationNames = new Set();
-
-                locations.forEach((loc) => {
-                    const business = businessMap.get(String(loc.dealer_id));
-                    const businessName = business?.name || 'Unknown Business';
-                    const locationName = loc.city || loc.name || 'Unknown Location';
-                    businessNames.add(businessName);
-                    locationNames.add(locationName);
-
-                    const vehicleCount = Number(loc.vehicle_count || 0);
-                    const avgQuality = Number(loc.avg_quality || 0);
-                    const avgPrice = Number(loc.avg_price || 0);
-                    const estimatedAwd4wd = avgQuality >= 88 ? 60 : avgQuality >= 80 ? 50 : 40;
-
-                    const tr = document.createElement('tr');
-                    tr.setAttribute('data-business', businessName);
-                    tr.setAttribute('data-location', locationName);
-                    tr.setAttribute('data-vehicle_count', String(vehicleCount));
-                    tr.setAttribute('data-avg_quality', String(avgQuality));
-                    tr.setAttribute('data-avg_price', String(avgPrice));
-                    tr.innerHTML = `
-                        <td>${businessName}</td>
-                        <td>${locationName}</td>
-                        <td>${vehicleCount}</td>
-                        <td>${avgQuality.toFixed(1)}</td>
-                        <td>${formatCurrency(avgPrice)}</td>
-                        <td>${safePercent(estimatedAwd4wd)}</td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-
-                populateSelectOptions('dealership-business-filter', Array.from(businessNames).sort(), 'All Businesses');
-                populateSelectOptions('dealership-location-filter', Array.from(locationNames).sort(), 'All Locations');
-            } catch (error) {
-                // Keep static sample rows/options if backend is unavailable.
-            }
-        }
-
-        function applyDealershipFilters() {
-            const business = document.getElementById('dealership-business-filter')?.value || '';
-            const location = document.getElementById('dealership-location-filter')?.value || '';
-            const sortField = document.getElementById('dealership-sort-field')?.value || 'vehicle_count';
-            const table = document.getElementById('dealership-table');
-            if (!table) return;
-
-            const tbody = table.querySelector('tbody');
-            const rows = Array.from(tbody.querySelectorAll('tr'));
-
-            rows.forEach((row) => {
-                const matchBusiness = !business || row.getAttribute('data-business') === business;
-                const matchLocation = !location || row.getAttribute('data-location') === location;
-                row.style.display = matchBusiness && matchLocation ? '' : 'none';
-            });
-
-            rows.sort((a, b) => parseDealershipMetric(b, sortField) - parseDealershipMetric(a, sortField));
-            rows.forEach((row) => tbody.appendChild(row));
-        }
-
-        function addChatMessage(role, text) {
-            const log = document.getElementById('chat-sim-log');
-            if (!log) return;
-            const div = document.createElement('div');
-            div.className = `chat-msg ${role}`;
-            div.textContent = text;
-            log.appendChild(div);
-            log.scrollTop = log.scrollHeight;
-        }
-
-        function getChatSimulatorResponse(message) {
-            const business = document.getElementById('chat-sim-business')?.value || 'Summit Automotive Group';
-            const location = document.getElementById('chat-sim-location')?.value || 'Denver';
-            const m = message.toLowerCase();
-
-            if (m.includes('awd') || m.includes('4wd') || m.includes('snow') || m.includes('powertrain')) {
-                return `At ${business} (${location}), I can prioritize AWD/4WD inventory. Example matches: 2019 Toyota RAV4 AWD, 2022 Mazda CX-5 AWD, 2021 Ford F-150 4WD.`;
-            }
-            if (m.includes('under') || m.includes('$') || m.includes('budget') || m.includes('price')) {
-                return `For ${location}, budget-friendly options under $35k include RAV4 ($26,995), Civic Touring ($22,995), and Model 3 ($32,995).`;
-            }
-            if (m.includes('suv')) {
-                return `SUV options in ${location}: Toyota RAV4, Mazda CX-5, Jeep Cherokee, and Toyota Highlander. I can filter by AWD, mileage, and quality score.`;
-            }
-            if (m.includes('test drive') || m.includes('schedule')) {
-                return `I can start a test-drive request for ${business} - ${location}. Use "Simulate Lead Handoff" to create a customer handoff event.`;
-            }
-            return `I can help with inventory at ${business} (${location}). Ask by price range, body type, powertrain (FWD/RWD/AWD/4WD), or specific make/model.`;
-        }
-
-        function sendChatSimulatorMessage() {
-            const input = document.getElementById('chat-sim-input');
-            if (!input) return;
-            const text = (input.value || '').trim();
-            if (!text) return;
-
-            addChatMessage('user', text);
-            const response = getChatSimulatorResponse(text);
-            setTimeout(() => addChatMessage('bot', response), 220);
-            input.value = '';
-        }
-
-        function simulateLeadHandoff() {
-            const business = document.getElementById('chat-sim-business')?.value || 'Summit Automotive Group';
-            const location = document.getElementById('chat-sim-location')?.value || 'Denver';
-            addChatMessage('bot', `Lead handoff created: customer inquiry routed to ${business} (${location}) sales queue.`);
-        }
-
-        function resetChatSimulator() {
-            const log = document.getElementById('chat-sim-log');
-            const input = document.getElementById('chat-sim-input');
-            if (log) log.innerHTML = '';
-            if (input) input.value = '';
-            addChatMessage('bot', 'Chat simulator ready. Ask about inventory, powertrain, budget, or schedule a test drive.');
-        }
-
-        function extractUrlFromCurl(curlCommand) {
-            if (!curlCommand) return '';
-            const match = curlCommand.match(/curl\s+(?:-[^\s]+\s+)*['"]?(https?:\/\/[^\s'"]+)['"]?/i);
-            return match ? match[1] : '';
-        }
-
-        function normalizeUrl(url) {
-            if (!url) return '';
-            const trimmed = url.trim();
-            if (!trimmed) return '';
-            if (/^https?:\/\//i.test(trimmed)) return trimmed;
-            return `https://${trimmed}`;
-        }
-
-        function updateScraperPreview() {
-            const urlInput = document.getElementById('scraper-target-url');
-            const curlInput = document.getElementById('scraper-curl-command');
-            const frame = document.getElementById('scraper-preview-frame');
-            const link = document.getElementById('scraper-preview-link');
-            const status = document.getElementById('scraper-preview-status');
-
-            if (!urlInput || !curlInput || !frame || !link || !status) return;
-
-            const explicitUrl = normalizeUrl(urlInput.value);
-            const curlUrl = normalizeUrl(extractUrlFromCurl(curlInput.value));
-            const resolvedUrl = explicitUrl || curlUrl;
-
-            if (!resolvedUrl) {
-                frame.removeAttribute('src');
-                link.href = '#';
-                status.textContent = 'Enter a URL or paste a curl command to preview the target site.';
-                return;
-            }
-
-            if (!explicitUrl && curlUrl) {
-                urlInput.value = curlUrl;
-            }
-
-            frame.src = resolvedUrl;
-            link.href = resolvedUrl;
-            status.textContent = `Preview target: ${resolvedUrl}`;
-        }
-
-        const scraperRunHistory = [];
-
-        function setScraperButtonsDisabled(disabled) {
-            ['scraper-btn-save', 'scraper-btn-test', 'scraper-btn-batch'].forEach((id) => {
-                const button = document.getElementById(id);
-                if (button) button.disabled = disabled;
-            });
-        }
-
-        function setScraperRunStatus(message, tone = 'muted') {
-            const status = document.getElementById('scraper-run-status');
-            if (!status) return;
-            status.textContent = message;
-            if (tone === 'error') status.style.color = 'var(--accent-error)';
-            else if (tone === 'success') status.style.color = 'var(--accent-success)';
-            else status.style.color = 'var(--text-secondary)';
-        }
-
-        function setScraperRunOutput(payload) {
-            const output = document.getElementById('scraper-run-output');
-            if (!output) return;
-            output.textContent = payload ? JSON.stringify(payload, null, 2) : '';
-        }
-
-        function addScraperHistoryEntry(entry) {
-            scraperRunHistory.unshift(entry);
-            if (scraperRunHistory.length > 12) {
-                scraperRunHistory.pop();
-            }
-
-            const tbody = document.getElementById('scraper-run-history-body');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-
-            scraperRunHistory.forEach((row) => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${row.time}</td>
-                    <td>${row.source}</td>
-                    <td>${row.cars}</td>
-                    <td>${row.status}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function getScraperSourceName() {
-            return document.getElementById('scraper-source-name')?.value?.trim() || 'manual-source';
-        }
-
-        function getScraperCurlCommand() {
-            return document.getElementById('scraper-curl-command')?.value?.trim() || '';
-        }
-
-        function parseBatchCurlCommands(raw) {
-            const matches = raw.match(/curl[\s\S]*?(?=\ncurl\s|$)/gi) || [];
-            return matches.map((item) => item.trim()).filter(Boolean);
-        }
-
-        async function runScrapeAction(mode) {
-            const sourceName = getScraperSourceName();
-            const curlCommand = getScraperCurlCommand();
-
-            if (!curlCommand) {
-                setScraperRunStatus('Paste at least one curl command first.', 'error');
-                return;
-            }
-
-            setScraperButtonsDisabled(true);
-            setScraperRunStatus('Running scraper request...', 'muted');
-
-            try {
-                let endpoint = '/api/test';
-                let payload = { curlCommand, sourceName };
-                if (mode === 'save') endpoint = '/api/scrape';
-                if (mode === 'batch') {
-                    endpoint = '/api/scrape/batch';
-                    payload = {
-                        curlCommands: parseBatchCurlCommands(curlCommand),
-                        sourceName
-                    };
-                    if (!payload.curlCommands.length) {
-                        throw new Error('Batch mode expects one curl command per line.');
-                    }
-                }
-
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                const result = await response.json();
-                if (!response.ok || result.success === false) {
-                    throw new Error(result.message || 'Scraper request failed');
-                }
-
-                const carsCount = mode === 'batch'
-                    ? Number(result.totalCars || 0)
-                    : Array.isArray(result.data) ? result.data.length : 0;
-                const metrics = result.metrics ? ` (inserted: ${result.metrics.inserted || 0}, updated: ${result.metrics.updated || 0}, skipped: ${result.metrics.skipped || 0})` : '';
-                const successMessage = `${mode.toUpperCase()} successful: ${carsCount} cars${metrics}`;
-
-                setScraperRunStatus(successMessage, 'success');
-                setScraperRunOutput(result);
-                addScraperHistoryEntry({
-                    time: new Date().toLocaleTimeString(),
-                    source: sourceName,
-                    cars: carsCount,
-                    status: 'Success'
-                });
-            } catch (error) {
-                setScraperRunStatus(`Error: ${error.message}`, 'error');
-                setScraperRunOutput({ error: error.message });
-                addScraperHistoryEntry({
-                    time: new Date().toLocaleTimeString(),
-                    source: sourceName,
-                    cars: 0,
-                    status: 'Failed'
-                });
-            } finally {
-                setScraperButtonsDisabled(false);
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            initDatabaseFieldPicker();
-            loadDealershipOverview();
-            applyDealershipFilters();
-            resetChatSimulator();
-            addScraperHistoryEntry({
-                time: '--',
-                source: 'No runs yet',
-                cars: '--',
-                status: 'Idle'
-            });
-        });
-    </script>
+        <script src="/app.js"></script>
 </body>
 </html>
+
 
 
 

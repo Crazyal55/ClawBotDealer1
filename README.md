@@ -10,7 +10,7 @@ This repository now runs on `server_pg.js` with PostgreSQL as the active runtime
 ## Runtime Target
 
 - Active runtime: `server_pg.js` (Node.js + Express + PostgreSQL)
-- API health endpoint: `GET /api/health`
+- API health endpoints: `GET /api/health` and `GET /api/health/db`
 - Frontend: static files from `public/`
 
 ## Prerequisites
@@ -35,7 +35,7 @@ Open `http://localhost:3000`.
 - `npm run start:sqlite` - legacy SQLite runtime (`server.js`)
 - `npm run db:pg:init` - initialize PostgreSQL schema + seed data
 - `npm run type-check` - run TypeScript compile check for `src/`
-- `npm run test:smoke` - start active runtime and verify `GET /api/health`
+- `npm run test:smoke` - start active runtime and verify `GET /api/health/db`
 - `npm run ci` - run `lint`, `type-check`, then smoke test
 
 ## Hybrid DB Setup (Your Order)
@@ -64,6 +64,7 @@ Open `http://localhost:3000`.
    - `npm start` (or `npm run start:pg`)
 4. Verify:
    - `GET http://localhost:3000/api/health`
+   - `GET http://localhost:3000/api/health/db`
 
 Notes:
 - SQL schema/seed file is `docs/placeholder_data.sql`.
@@ -72,6 +73,7 @@ Notes:
 ## Documentation
 
 - Progress tracker: `docs/PROGRESS_UPDATE.md`
+- SQL ingestion contract: `docs/INGESTION_CONTRACT.md`
 - VPS deployment runbook: `docs/VPS_DEPLOY.md`
 - Azure reference runbook (for separate SaaS/chatbot stack): `docs/AZURE_SETUP.md`
 
