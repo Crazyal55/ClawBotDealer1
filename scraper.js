@@ -1,7 +1,31 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 
+/**
+ * CarScraper - Web scraper for dealership vehicle inventory
+ *
+ * Extracts vehicle data from dealership websites by parsing HTML,
+ * JSON-LD structured data, and various page formats (VDP/SRP).
+ *
+ * @class CarScraper
+ * @example
+ * const scraper = require('./scraper');
+ * const result = await scraper.fromCurl("curl 'https://example.com/inventory'", 'My Dealership');
+ * console.log(result.cars); // Array of vehicle objects
+ */
 class CarScraper {
+  /**
+   * Scrape vehicle inventory from a curl command
+   *
+   * @param {string} curlCommand - The curl command to extract URL and headers from
+   * @param {string} [sourceName='unknown'] - Name of the data source
+   * @returns {Promise<ScraperResult>} Object containing source, url, and extracted cars
+   * @throws {Error} If URL cannot be extracted from curl command
+   *
+   * @example
+   * const result = await scraper.fromCurl("curl 'https://example.com' -H 'Accept: text/html'", 'Cars.com');
+   * // Returns: { source: 'Cars.com', url: 'https://example.com', cars: [...] }
+   */
   async fromCurl(curlCommand, sourceName = 'unknown') {
     // Parse curl command to extract URL
     const urlMatch = curlCommand.match(/curl\s+['"]?([^'"\s]+)['"]?/i);
@@ -50,7 +74,17 @@ class CarScraper {
     return headers;
   }
 
-  extractCars(html, sourceUrl) {
+  /**
+   * Extract HTTP headers from curl command
+   *
+   * @param {string} curlCommand - The curl command string
+   * @returns {Object} Headers object with key-value pairs
+   *
+   * @example
+   * const headers = scraper.extractHeaders("curl 'https://example.com' -H 'Accept: text/html'");
+   * // Returns: { Accept: 'text/html', 'User-Agent': 'Mozilla/5.0...' }
+   */
+  extractHeaders(curlCommand) {
     const $ = cheerio.load(html);
     const cars = [];
 
@@ -591,6 +625,38 @@ class CarScraper {
     return images;
   }
 
+  /**
+   * Calculate data quality score for a vehicle record
+   *
+   * Scores a vehicle record based on completeness of key fields.
+   * Maximum score is 100 points.
+   *
+   * Scoring breakdown:
+   * - Core data (40 pts): VIN (10), year (5), make (5), model (5), price (10), mileage (5)
+   * - Specs (20 pts): transmission (5), drivetrain (5), body_type (5), fuel_type (5)
+   * - Details (20 pts): exterior_color (5), interior_color (5), engine (5), description (5)
+   * - Media (10 pts): 3+ images (10), 1-2 images (5)
+   * - Dealer (10 pts): dealer_name (5), dealer_phone or dealer_address (5)
+   *
+   * @param {Object} car - Vehicle object to score
+   * @param {string} [car.vin] - 17-character VIN
+   * @param {number} [car.year] - Vehicle model year (1900-current year+2)
+   * @param {string} [car.make] - Vehicle manufacturer
+   * @param {string} [car.model] - Vehicle model
+   * @param {number} [car.price] - Vehicle price (0-1,000,000 range)
+   * @param {number} [car.mileage] - Odometer reading
+   * @returns {number} Quality score from 0 to 100
+   *
+   * @example
+   * const score = scraper.calculateQualityScore({
+   *   vin: '12345678901234567',
+   *   year: 2020,
+   *   make: 'Toyota',
+   *   model: 'Camry',
+   *   price: 25000
+   * });
+   * // Returns: 40 (minimum for core fields)
+   */
   calculateQualityScore(car) {
     let score = 0;
     const maxScore = 100;
@@ -626,6 +692,28 @@ class CarScraper {
     return Math.min(score, maxScore);
   }
 
+  /**
+   * Generate quality flags for a vehicle record
+   *
+   * Returns an array of warning/error flags based on data quality issues.
+   * Flags can help identify data that needs attention or verification.
+   *
+   * Flag types:
+   * - 'error': Critical issues (missing make/model, invalid VIN)
+   * - 'warning': Data quality concerns (missing price, unusual values)
+   * - 'info': Minor issues (no images, minimal description)
+   *
+   * @param {Object} car - Vehicle object to check
+   * @returns {QualityFlag[]} Array of flag objects with type and message
+   *
+   * @example
+   * const flags = scraper.getQualityFlags({ year: 2020 });
+   * // Returns: [
+   * //   { type: 'error', message: 'Missing VIN' },
+   * //   { type: 'error', message: 'Missing make or model' },
+   * //   { type: 'warning', message: 'Missing price' }
+   * // ]
+   */
   getQualityFlags(car) {
     const flags = [];
 
