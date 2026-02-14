@@ -1057,17 +1057,12 @@
                     </div>
                     <p class="panel-subtitle">Inventory page with row-level browsing.</p>
                     <div class="table-toolbar">
-                        <input type="text" class="search-input" placeholder="Search inventory sample rows...">
+                        <input id="inventory-search-input" type="text" class="search-input" placeholder="Search inventory rows..." oninput="filterInventoryRows(this.value)">
                     </div>
                     <div class="table-wrap">
                         <table class="data-table">
                             <thead><tr><th>VIN</th><th>Make</th><th>Model</th><th>Year</th><th>Miles</th><th>Price</th><th>Source</th></tr></thead>
-                            <tbody>
-                                <tr><td>1FTFW1E57MFA12345</td><td>Ford</td><td>F-150</td><td>2021</td><td>45,200</td><td>$38,995</td><td>Cars.com</td></tr>
-                                <tr><td>2T1BURHE1GC112345</td><td>Toyota</td><td>RAV4</td><td>2019</td><td>38,450</td><td>$26,995</td><td>AutoTrader</td></tr>
-                                <tr><td>JM1BK3240L0123456</td><td>Mazda</td><td>CX-5</td><td>2022</td><td>22,100</td><td>$33,495</td><td>Cars.com</td></tr>
-                                <tr><td>5YJ3E1E8JF123456</td><td>Tesla</td><td>Model 3</td><td>2020</td><td>34,200</td><td>$32,995</td><td>Dealer API</td></tr>
-                            </tbody>
+                            <tbody id="inventory-table-body"></tbody>
                         </table>
                     </div>
                 </div>
@@ -1083,22 +1078,17 @@
                     <div class="split-grid">
                         <div class="info-card">
                             <div class="info-title">Flagged Records</div>
-                            <div class="info-value">7</div>
+                            <div id="quality-flagged-count" class="info-value">-</div>
                         </div>
                         <div class="info-card">
                             <div class="info-title">Average Quality</div>
-                            <div class="info-value">87%</div>
+                            <div id="quality-scanned-count" class="info-value">-</div>
                         </div>
                     </div>
                     <div class="table-wrap">
                         <table class="data-table">
                             <thead><tr><th>VIN</th><th>Score</th><th>Severity</th><th>Flags</th></tr></thead>
-                            <tbody>
-                                <tr><td>1FTFW1E57MFA12345</td><td>92</td><td>Info</td><td>None</td></tr>
-                                <tr><td>2T1BURHE1GC112345</td><td>88</td><td>Warning</td><td>Minor trim mismatch</td></tr>
-                                <tr><td>JF2SKACC9KH2345678</td><td>60</td><td>Error</td><td>Mileage/description incomplete</td></tr>
-                                <tr><td>1F1F15W75KEF123456</td><td>45</td><td>Error</td><td>High mileage + sparse features</td></tr>
-                            </tbody>
+                            <tbody id="quality-table-body"></tbody>
                         </table>
                     </div>
                 </div>
@@ -1419,6 +1409,110 @@
             if (route === 'dealership') {
                 loadDealershipOverview();
                 applyDealershipFilters();
+            }
+            if (route === 'inventory') {
+                loadInventoryRows();
+            }
+            if (route === 'quality') {
+                loadQualityRows();
+            }
+        }
+
+        let inventoryRowsCache = [];
+
+        function textValue(value) {
+            if (value === null || value === undefined || value === '') return '-';
+            return String(value);
+        }
+
+        function formatMiles(value) {
+            const n = Number(value);
+            return Number.isFinite(n) ? n.toLocaleString() : '-';
+        }
+
+        function filterInventoryRows(searchValue) {
+            const value = (searchValue || '').toLowerCase().trim();
+            const rows = document.querySelectorAll('#inventory-table-body tr');
+            rows.forEach((row) => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(value) ? '' : 'none';
+            });
+        }
+
+        async function loadInventoryRows() {
+            const tbody = document.getElementById('inventory-table-body');
+            if (!tbody) return;
+
+            try {
+                const response = await fetch('/api/inventory');
+                if (!response.ok) throw new Error('Inventory API unavailable');
+                const rows = await response.json();
+                if (!Array.isArray(rows)) throw new Error('Unexpected inventory response');
+
+                inventoryRowsCache = rows;
+                tbody.innerHTML = '';
+
+                rows.slice(0, 200).forEach((row) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${textValue(row.vin)}</td>
+                        <td>${textValue(row.make)}</td>
+                        <td>${textValue(row.model)}</td>
+                        <td>${textValue(row.year)}</td>
+                        <td>${formatMiles(row.mileage)}</td>
+                        <td>${formatCurrency(row.price)}</td>
+                        <td>${textValue(row.source)}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                if (!rows.length) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = '<td colspan="7">No inventory rows returned.</td>';
+                    tbody.appendChild(tr);
+                }
+            } catch (error) {
+                // Keep existing rows if backend call fails.
+            }
+        }
+
+        async function loadQualityRows() {
+            const tbody = document.getElementById('quality-table-body');
+            const flagged = document.getElementById('quality-flagged-count');
+            const scanned = document.getElementById('quality-scanned-count');
+            if (!tbody || !flagged || !scanned) return;
+
+            try {
+                const response = await fetch('/api/quality/verify?limit=200');
+                if (!response.ok) throw new Error('Quality API unavailable');
+                const payload = await response.json();
+                if (!payload.success) throw new Error(payload.message || 'Quality fetch failed');
+
+                const findings = Array.isArray(payload.findings) ? payload.findings : [];
+                flagged.textContent = String(payload.flagged ?? findings.length);
+                scanned.textContent = String(payload.scanned ?? 0);
+
+                tbody.innerHTML = '';
+                findings.slice(0, 200).forEach((item) => {
+                    const issues = Array.isArray(item.issues) ? item.issues : [];
+                    const severity = issues.length >= 3 ? 'Error' : issues.length ? 'Warning' : 'Info';
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${textValue(item.vin)}</td>
+                        <td>${Math.max(0, 100 - issues.length * 20)}</td>
+                        <td>${severity}</td>
+                        <td>${issues.length ? issues.join(', ') : 'None'}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                if (!findings.length) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = '<td colspan="4">No quality issues detected.</td>';
+                    tbody.appendChild(tr);
+                }
+            } catch (error) {
+                // Keep existing rows if backend call fails.
             }
         }
 

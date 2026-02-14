@@ -82,6 +82,9 @@ Notes:
 - `pg_pool.js` - PostgreSQL connection pooling framework (env-driven)
 - `docs/VPS_DEPLOY.md` - VPS deployment guide (systemd + Nginx + TLS)
 - `scripts/deploy_vps.sh` - VPS deploy/update script
+- `scripts/backup-database.sh` - backup script with retention
+- `scripts/restore-drill.sh` - restore verification drill from latest backup
+- `scripts/health-monitor-24h.sh` - 24h health monitor for staging stability
 - `scripts/car-scraper.service` - systemd unit template
 - `scripts/nginx-dealer-dev-ops.conf` - Nginx reverse proxy template
 

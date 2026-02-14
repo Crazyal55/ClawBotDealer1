@@ -14,5 +14,5 @@ ENV PORT=3000
 
 EXPOSE 3000
 
-# Cloud-first default runtime (PostgreSQL path). Override at deploy time if needed.
-CMD ["npm", "run", "start:pg"]
+# Default runtime (PostgreSQL path).
+CMD ["node", "server_pg.js"]
