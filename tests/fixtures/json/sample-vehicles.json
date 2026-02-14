@@ -1,0 +1,148 @@
+{
+  "valid_vehicles": [
+    {
+      "vin": "4T1BF1FK5DU123456",
+      "year": 2023,
+      "make": "Toyota",
+      "model": "Camry",
+      "trim": "LE",
+      "price": 28500,
+      "mileage": 15234,
+      "exterior_color": "Super White",
+      "interior_color": "Fabric Black",
+      "body_type": "Sedan",
+      "transmission": "8-Speed Automatic",
+      "drivetrain": "FWD",
+      "fuel_type": "Gasoline",
+      "engine": "2.5L 4-Cylinder",
+      "engine_cylinders": "4",
+      "engine_displacement": "2.5",
+      "horsepower": 203,
+      "mpg_city": 28,
+      "mpg_highway": 39,
+      "features": [
+        "Bluetooth Connectivity",
+        "Apple CarPlay",
+        "Android Auto",
+        "Backup Camera",
+        "Blind Spot Monitoring"
+      ],
+      "description": "Clean 2023 Toyota Camry LE with low miles.",
+      "images": [
+        "https://example.com/images/1.jpg",
+        "https://example.com/images/2.jpg"
+      ],
+      "url": "https://example.com/vehicle/12345",
+      "stock_number": "TB231234",
+      "condition": "Used",
+      "title_status": "Clean"
+    },
+    {
+      "vin": "1FA6P8CF5G5987654",
+      "year": 2022,
+      "make": "Ford",
+      "model": "Mustang",
+      "trim": "GT Premium",
+      "price": 44995,
+      "mileage": 18432,
+      "exterior_color": "Shadow Black",
+      "interior_color": "Ebony Leather",
+      "body_type": "Convertible",
+      "transmission": "6-Speed Manual",
+      "drivetrain": "RWD",
+      "fuel_type": "Gasoline",
+      "engine": "5.0L V8 Ti-VCT",
+      "engine_cylinders": "8",
+      "engine_displacement": "5.0",
+      "horsepower": 450,
+      "mpg_city": 15,
+      "mpg_highway": 24,
+      "features": [
+        "Leather Seats",
+        "Navigation",
+        "Shaker Audio",
+        "Heated Seats",
+        "Remote Start"
+      ],
+      "description": "2022 Ford Mustang GT Premium Convertible.",
+      "images": [
+        "https://example.com/mustang/1.jpg",
+        "https://example.com/mustang/2.jpg"
+      ],
+      "url": "https://example.com/mustang/54321",
+      "stock_number": "FORD22GT9876",
+      "condition": "Used",
+      "title_status": "Clean"
+    },
+    {
+      "vin": "2T1BURHE5GC123456",
+      "year": 2023,
+      "make": "Lexus",
+      "model": "RX",
+      "trim": "350",
+      "price": 52000,
+      "mileage": 8500,
+      "exterior_color": "Nebula Gray",
+      "interior_color": "NuLuxe",
+      "body_type": "SUV",
+      "transmission": "8-Speed Automatic",
+      "drivetrain": "AWD",
+      "fuel_type": "Gasoline",
+      "engine": "3.5L V6",
+      "engine_cylinders": "6",
+      "engine_displacement": "3.5",
+      "horsepower": 295,
+      "mpg_city": 20,
+      "mpg_highway": 27,
+      "features": [
+        "Panoramic Roof",
+        "Mark Levinson Audio",
+        "Heated & Ventilated Seats",
+        "360 Camera",
+        "Head-Up Display"
+      ],
+      "description": "Certified Pre-Owned 2023 Lexus RX 350.",
+      "images": [],
+      "url": "https://example.com/lexus-rx",
+      "stock_number": "L23RX98765",
+      "condition": "Certified Pre-Owned",
+      "title_status": "Clean"
+    }
+  ],
+  "invalid_vehicles": [
+    {
+      "vin": "SHORT",
+      "make": "Test",
+      "model": null,
+      "price": "not a number"
+    },
+    {
+      "vin": "",
+      "year": "1800",
+      "make": "",
+      "model": ""
+    },
+    {
+      "vin": "TOOLONG12345678901",
+      "price": -100,
+      "mileage": -50
+    }
+  ],
+  "test_urls": {
+    "srp_pages": [
+      "https://www.cars.com/vehicles/inventory/",
+      "https://www.autotrader.com/cars-for-sale/",
+      "https://example.com/inventory"
+    ],
+    "vdp_pages": [
+      "https://www.cars.com/vehicledetails/detail-39020412/",
+      "https://www.autotrader.com/cars-for-sale/vehicledetails.html",
+      "https://example.com/vehicle/toyota-camry-123"
+    ],
+    "pagination_urls": [
+      "https://example.com/inventory?page=2",
+      "https://example.com/inventory/page/2",
+      "https://example.com/inventory/2"
+    ]
+  }
+}
