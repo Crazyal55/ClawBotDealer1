@@ -19,8 +19,8 @@ class BrowserRenderer {
 
     // Performance optimization
     this.resourceLimits = options.resourceLimits || {
-      maxRequests: 100,
-      idleTimeout: 2000
+      maxRequests: 500,  // Increased for JavaScript-heavy sites
+      idleTimeout: 3000   // Wait longer for dynamic content
     };
   }
 
@@ -72,6 +72,28 @@ class BrowserRenderer {
       // Set viewport
       await page.setViewport(this.viewport);
 
+      // Block unnecessary resources (ads, analytics, tracking) to reduce requests
+      await page.setRequestInterception(true);
+
+      page.on('request', (request) => {
+        const resourceType = request.resourceType();
+        const url = request.url();
+
+        // Block images, fonts, stylesheets, media, WebSocket, and other non-essential resources
+        if (['image', 'font', 'stylesheet', 'media', 'websocket'].includes(resourceType)) {
+          request.abort();
+        } else if (url.includes('analytics') ||
+                   url.includes('tracking') ||
+                   url.includes('telemetry') ||
+                   url.includes('ad.doubleclick') ||
+                   url.includes('facebook') ||
+                   url.includes('twitter')) {
+          request.abort();
+        } else {
+          request.continue();
+        }
+      });
+
       // Set user agent
       const userAgent = options.userAgent ||
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
@@ -85,49 +107,34 @@ class BrowserRenderer {
       // Track resource loading for idle detection
       let requestCount = 0;
       let lastRequestTime = Date.now();
-      const requests = new Set();
 
-      // Resource monitoring
-      if (this.resourceLimits.maxRequests) {
-        page.on('request', (request) => {
-          requestCount++;
-          lastRequestTime = Date.now();
-          requests.add(request);
-
-          if (requestCount > this.resourceLimits.maxRequests) {
-            console.log(`[BrowserRenderer] Max requests reached, stopping...`);
-            request.abort();
-          }
-        });
-
-        page.on('requestfinished', (request) => {
-          requests.delete(request);
-        });
-
-        page.on('requestfailed', (request) => {
-          requests.delete(request);
-        });
-      }
+      // Simple resource monitoring (no interception/abort)
+      // Disabled to reduce noise
+      // if (this.resourceLimits.maxRequests) {
+      //   page.on('request', () => { requestCount++; });
+      // }
 
       // Navigate to URL with timeout
       console.log(`[BrowserRenderer] Loading ${url}...`);
       const response = await page.goto(url, {
-        waitUntil: options.waitUntil || 'networkidle0',
-        timeout: options.timeout || this.timeout
+        waitUntil: 'domcontentloaded',  // Wait for DOM to be ready
+        timeout: 20000  // 20 second timeout for initial load
       });
 
-      // Wait for additional content to load
-      if (options.waitForSelector) {
-        try {
-          await page.waitForSelector(options.waitForSelector, { timeout: 5000 });
-        } catch (err) {
-          console.log(`[BrowserRenderer] Selector ${options.waitForSelector} not found`);
-        }
-      }
+      // Wait for JavaScript to execute and populate content
+      // Use a simple timeout approach for complex SPAs
+      console.log(`[BrowserRenderer] Waiting for dynamic content to load...`);
+      await new Promise(resolve => setTimeout(resolve, 15000));  // Wait 8 seconds
 
-      // Wait for idle (no more network activity)
-      if (this.resourceLimits.idleTimeout) {
-        await this._waitForIdle(page, this.resourceLimits.idleTimeout);
+      // Optional: Try to wait for skeleton loaders to disappear
+      try {
+        await page.waitForFunction(() => {
+          const skeletons = document.querySelectorAll('.skeleton, [class*="skeleton"]');
+          return skeletons.length === 0 || document.body.textContent.length > 5000;
+        }, { timeout: 5000 });
+        console.log(`[BrowserRenderer] Skeleton loaders removed`);
+      } catch (err) {
+        console.log(`[BrowserRenderer] Skeleton loaders still present, continuing anyway`);
       }
 
       // Get final HTML
@@ -294,6 +301,25 @@ class BrowserRenderer {
 
       for (const pattern of jsFrameworkIndicators) {
         if (pattern.test(html)) {
+          return true;
+        }
+      }
+
+      // Check for skeleton loaders ( DealerOn/DSP platforms )
+      const skeletonLoaderIndicators = [
+        /skeleton/i,
+        /vehicle-card-skeleton/i,
+        /skeleton-loader/i,
+        /WasabiBundle/i,  // DealerOn framework
+        /dealeron\.js/i,
+        /dlron\.us/i,
+        /wasabi/i,
+        /searchResultsPageWasabiBundle/i
+      ];
+
+      for (const pattern of skeletonLoaderIndicators) {
+        if (pattern.test(html)) {
+          console.log('[BrowserRenderer] Skeleton loader detected:', pattern);
           return true;
         }
       }

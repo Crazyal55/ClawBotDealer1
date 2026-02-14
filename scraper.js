@@ -1,5 +1,6 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
+const BrowserRenderer = require('./crawler/browser-renderer');
 
 /**
  * CarScraper - Web scraper for dealership vehicle inventory
@@ -36,13 +37,94 @@ class CarScraper {
     const url = urlMatch[1];
 
     // Extract headers from curl if present
-    const headers = this.extractHeaders(curlCommand);
+    const headers = this.extractHeadersFromCurl(curlCommand);
 
-    // Fetch the page
-    const response = await axios.get(url, { headers, timeout: 30000 });
+    // HYBRID APPROACH: Try Cheerio first (fast), then fall back to Puppeteer
+    let html;
+    let usedBrowser = false;
 
-    // Parse and extract car data
-    const cars = this.extractCars(response.data, url);
+    try {
+      // First attempt: Fast Cheerio-based scraping
+      console.log(`[CarScraper] Trying Cheerio for ${url}...`);
+      const response = await axios.get(url, { headers, timeout: 30000 });
+      html = response.data;
+
+      // Extract cars using Cheerio
+      const cars = this.extractCars(html, url);
+
+      // Check if we found REAL vehicles (not just skeleton loaders)
+      const hasRealData = cars.some(car =>
+        car.vin || car.price || (car.year && car.make && car.model && car.year !== 'New')
+      );
+
+      // If we found quality vehicles, return early (fast path)
+      if (cars && cars.length > 0 && hasRealData) {
+        console.log(`[CarScraper] ✅ Cheerio extracted ${cars.length} vehicles with real data`);
+        return {
+          source: sourceName,
+          url: url,
+          cars: cars
+        };
+      }
+
+      // No real vehicles found - check if page needs browser rendering
+      if (cars && cars.length > 0 && !hasRealData) {
+        console.log(`[CarScraper] ⚠️  Cheerio found ${cars.length} items but no real data (likely skeleton loaders)`);
+      }
+      console.log(`[CarScraper] ⚠️  No vehicles extracted with Cheerio`);
+      console.log(`[CarScraper] Checking if browser rendering is needed...`);
+
+      if (BrowserRenderer.needsBrowser(url, html)) {
+        console.log(`[CarScraper] 🔄 Browser rendering detected, switching to Puppeteer...`);
+        usedBrowser = true;
+
+        // Initialize browser renderer
+        const renderer = new BrowserRenderer({
+          timeout: 30000,
+          headless: true
+        });
+
+        try {
+          // Fetch with browser rendering
+          const result = await renderer.fetch(url, {
+            headers,
+            userAgent: headers['User-Agent'],
+            waitForSelector: '.vehicle-card:not(.skeleton), .inventory-item, .vehicle-item',
+            waitUntil: 'networkidle2'
+          });
+
+          html = result.html;
+          console.log(`[CarScraper] Browser rendered HTML: ${result.html.length} bytes`);
+
+          // Save HTML for debugging (only in development)
+          if (process.env.NODE_ENV !== 'production') {
+            const fs = require('fs');
+            const path = require('path');
+            const debugFile = path.join(__dirname, 'debug-rendered.html');
+            fs.writeFileSync(debugFile, html);
+            console.log(`[CarScraper] Saved rendered HTML to ${debugFile} for inspection`);
+          }
+
+          // Close browser to free resources
+          await renderer.close();
+
+        } catch (browserError) {
+          console.error(`[CarScraper] Browser rendering failed: ${browserError.message}`);
+          // Fall through to return whatever Cheerio extracted
+        }
+      } else {
+        console.log(`[CarScraper] Static HTML detected, but no vehicles found`);
+      }
+
+    } catch (error) {
+      console.error(`[CarScraper] Error during scraping: ${error.message}`);
+      throw error;
+    }
+
+    // Final extraction attempt (either from browser-rendered HTML or original)
+    const cars = this.extractCars(html, url);
+
+    console.log(`[CarScraper] Final result: ${cars.length} vehicles extracted ${usedBrowser ? '(using Puppeteer)' : '(using Cheerio)'}`);
 
     return {
       source: sourceName,
@@ -51,7 +133,7 @@ class CarScraper {
     };
   }
 
-  extractHeaders(curlCommand) {
+  extractHeadersFromCurl(curlCommand) {
     const headers = {};
 
     // Extract -H or --header flags
@@ -75,16 +157,13 @@ class CarScraper {
   }
 
   /**
-   * Extract HTTP headers from curl command
+   * Extract vehicle data from HTML
    *
-   * @param {string} curlCommand - The curl command string
-   * @returns {Object} Headers object with key-value pairs
-   *
-   * @example
-   * const headers = scraper.extractHeaders("curl 'https://example.com' -H 'Accept: text/html'");
-   * // Returns: { Accept: 'text/html', 'User-Agent': 'Mozilla/5.0...' }
+   * @param {string} html - HTML content
+   * @param {string} sourceUrl - Source URL for relative links
+   * @returns {Array<Car>} Array of vehicle objects
    */
-  extractHeaders(curlCommand) {
+  extractCars(html, sourceUrl) {
     const $ = cheerio.load(html);
     const cars = [];
 
@@ -285,16 +364,28 @@ class CarScraper {
   extractMultipleCars($, baseUrl) {
     const cars = [];
 
-    // Try to find vehicle containers
+    // First try: Find elements with data-vin (most reliable for DealerOn)
+    const vehicleElements = $('[data-vin]');
+    console.log(`[CarScraper] Found ${vehicleElements.length} elements with data-vin attribute`);
+
+    if (vehicleElements.length > 0) {
+      vehicleElements.each((i, el) => {
+        const $el = $(el);
+        const car = this.extractFromCard($el, baseUrl);
+        if (car && (car.year || car.make || car.price)) {
+          cars.push(car);
+        }
+      });
+      return cars;
+    }
+
+    // Fallback: Try traditional selectors
     const selectors = [
-      '.vehicle',
+      '.vehicle-card',  // DealerOn/DSP sites use this class
       '.car-card',
       '.inventory-item',
       '.vehicle-item',
-      '.listing',
-      '[class*="vehicle"]',
-      '[class*="inventory"]',
-      '[class*="listing"]'
+      '.listing'
     ];
 
     for (const selector of selectors) {
@@ -318,14 +409,31 @@ class CarScraper {
   extractFromCard($el, baseUrl) {
     const car = { raw_data: {} };
 
-    car.year = this.extractYear($el);
-    const makeModel = this.extractMakeModel($el);
-    car.make = makeModel.make;
-    car.model = makeModel.model;
-    car.trim = makeModel.trim;
+    // Try to extract from data-* attributes first (modern DealerOn/DSP sites)
+    const dataAttrs = this.extractFromDataAttributes($el);
 
-    car.price = this.extractPrice($el);
-    car.mileage = this.extractMileage($el);
+    if (dataAttrs.year || dataAttrs.make || dataAttrs.price) {
+      // Use data attributes if available
+      console.log(`[CarScraper] ✓ Using data attributes: year=${dataAttrs.year}, make=${dataAttrs.make}, model=${dataAttrs.model}, price=${dataAttrs.price}`);
+      car.year = dataAttrs.year ? parseInt(dataAttrs.year) : this.extractYear($el);
+      car.make = dataAttrs.make || null;
+      car.model = dataAttrs.model || null;
+      car.trim = dataAttrs.trim || null;
+      car.price = dataAttrs.price ? parseFloat(dataAttrs.price) : this.extractPrice($el);
+      car.mileage = dataAttrs.mileage ? parseInt(dataAttrs.mileage) : this.extractMileage($el);
+      car.vin = dataAttrs.vin || this.extractText($el, ['.vin', '[data-vin]', '*:contains("VIN")']);
+    } else {
+      // Fall back to text-based extraction
+      console.log(`[CarScraper] No data attributes found, using text extraction`);
+      car.year = this.extractYear($el);
+      const makeModel = this.extractMakeModel($el);
+      car.make = makeModel.make;
+      car.model = makeModel.model;
+      car.trim = makeModel.trim;
+
+      car.price = this.extractPrice($el);
+      car.mileage = this.extractMileage($el);
+    }
 
     car.url = $el.find('a').first().attr('href');
     if (car.url && !car.url.startsWith('http')) {
@@ -394,7 +502,49 @@ class CarScraper {
     cars.push(carData);
   }
 
+  extractFromDataAttributes($el) {
+    const data = {};
+
+    // Common data attribute names used by DealerOn and other platforms
+    const mappings = {
+      vin: ['data-vin', 'data-vehicleId', 'data-vehicle-id'],
+      year: ['data-year', 'data-vehicleYear', 'data-vehicle-year'],
+      make: ['data-make', 'data-vehicleMake', 'data-vehicle-make'],
+      model: ['data-model', 'data-vehicleModel', 'data-vehicle-model'],
+      trim: ['data-trim', 'data-vehicleTrim', 'data-vehicle-trim'],
+      price: ['data-price', 'data-vehiclePrice', 'data-vehicle-price', 'data-msrp'],
+      mileage: ['data-mileage', 'data-odometer', 'data-miles'],
+      exterior_color: ['data-extcolor', 'data-extColor', 'data-exteriorColor'],
+      interior_color: ['data-intcolor', 'data-intColor', 'data-interiorColor'],
+      body_type: ['data-bodystyle', 'data-bodyStyle', 'data-bodyType'],
+      transmission: ['data-trans', 'data-transmission', 'data-transCode'],
+      drivetrain: ['data-drivetrain', 'data-driveTrain'],
+      fuel_type: ['data-fueltype', 'data-fuelType', 'data-fuel'],
+      engine: ['data-engine', 'data-engineDescription'],
+      stock_number: ['data-stocknum', 'data-stockNum', 'data-stock', 'data-stockNumber']
+    };
+
+    // Extract each field from possible data attributes
+    for (const [field, attributes] of Object.entries(mappings)) {
+      for (const attr of attributes) {
+        const value = $el.attr(attr);
+        if (value) {
+          data[field] = value;
+          break;
+        }
+      }
+    }
+
+    console.log(`[CarScraper] Data attributes found:`, Object.keys(data).length, 'fields:', Object.keys(data).join(', '));
+
+    return data;
+  }
+
   extractText($, selectors, multiline = false) {
+    // $ can be either root Cheerio object or a scoped element ($el)
+    // Check if $ has .find() method (root object) or not (scoped element)
+    const isRoot = typeof $.find === 'function';
+
     for (const selector of selectors) {
       if (selector.includes(':contains')) {
         // Handle :contains pseudo-selector
@@ -402,7 +552,8 @@ class CarScraper {
         const baseSelector = parts[0] || '*';
         const searchText = parts[1]?.replace(/['"]?\)/, '');
 
-        $(baseSelector).each((i, el) => {
+        if (isRoot) {
+          $(baseSelector).each((i, el) => {
           const text = $(el).text();
           if (text.toLowerCase().includes(searchText.toLowerCase())) {
             // Try to find the value (text after the label)
@@ -427,7 +578,7 @@ class CarScraper {
           }
         });
       } else {
-        const $el = $(selector);
+        const $el = $.find ? $.find(selector) : $(selector);
         if ($el.length > 0) {
           const text = $el.first().text().trim();
           if (text) return multiline ? text : text.split('\n')[0].trim();

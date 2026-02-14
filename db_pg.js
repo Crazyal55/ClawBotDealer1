@@ -29,6 +29,7 @@ class CarDatabase {
 
       if (tables.includes('vehicles') && tables.includes('dealers') && tables.includes('dealer_locations')) {
         await this.ensureIngestionIndexes();
+        await this.ensureChatTables();
         console.log('Database already initialized');
         return;
       }
@@ -602,6 +603,80 @@ class CarDatabase {
       flagged: findings.length,
       findings
     };
+  }
+
+  async ensureChatTables() {
+    await this.pool.query(`
+      CREATE TABLE IF NOT EXISTS chat_sessions (
+        id BIGSERIAL PRIMARY KEY,
+        session_key VARCHAR(120) UNIQUE NOT NULL,
+        business VARCHAR(200),
+        location VARCHAR(200),
+        customer_name VARCHAR(200),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await this.pool.query(`
+      CREATE TABLE IF NOT EXISTS chat_messages (
+        id BIGSERIAL PRIMARY KEY,
+        session_id BIGINT REFERENCES chat_sessions(id) ON DELETE CASCADE,
+        role VARCHAR(20) NOT NULL,
+        message TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await this.pool.query('CREATE INDEX IF NOT EXISTS idx_chat_messages_session_id ON chat_messages (session_id)');
+  }
+
+  async createOrUpdateChatSession(sessionKey, context = {}) {
+    const result = await this.pool.query(`
+      INSERT INTO chat_sessions (session_key, business, location, customer_name, updated_at)
+      VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+      ON CONFLICT (session_key) DO UPDATE SET
+        business = COALESCE(EXCLUDED.business, chat_sessions.business),
+        location = COALESCE(EXCLUDED.location, chat_sessions.location),
+        customer_name = COALESCE(EXCLUDED.customer_name, chat_sessions.customer_name),
+        updated_at = CURRENT_TIMESTAMP
+      RETURNING *
+    `, [
+      this.normalizeText(sessionKey),
+      this.normalizeText(context.business),
+      this.normalizeText(context.location),
+      this.normalizeText(context.customer_name)
+    ]);
+
+    return result.rows[0];
+  }
+
+  async addChatMessage(sessionId, role, message) {
+    const result = await this.pool.query(`
+      INSERT INTO chat_messages (session_id, role, message)
+      VALUES ($1, $2, $3)
+      RETURNING *
+    `, [Number(sessionId), role, message]);
+    return result.rows[0];
+  }
+
+  async listRecentChatSessions(limit = 25) {
+    const rows = await this.pool.query(`
+      SELECT
+        s.id,
+        s.session_key,
+        s.business,
+        s.location,
+        s.customer_name,
+        s.updated_at,
+        COUNT(m.id) AS message_count
+      FROM chat_sessions s
+      LEFT JOIN chat_messages m ON m.session_id = s.id
+      GROUP BY s.id
+      ORDER BY s.updated_at DESC
+      LIMIT $1
+    `, [Number(limit)]);
+    return rows.rows;
   }
 
   normalizeText(value) {

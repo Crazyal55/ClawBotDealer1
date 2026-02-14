@@ -54,6 +54,15 @@ jobs:
           NODE_ENV: test
         run: npm run test:ci
 
+      - name: Run smoke health check
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/clawbot_test
+          NODE_ENV: test
+          SERVER_ENTRY: server_pg.js
+          SERVER_PORT: 3000
+          HEALTH_URL: http://127.0.0.1:3000/api/health/db
+        run: npm run test:smoke
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
@@ -165,4 +174,3 @@ jobs:
 
       - name: Run TypeScript type check
         run: npm run type-check
-        continue-on-error: true
