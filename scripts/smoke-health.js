@@ -1,6 +1,8 @@
 const { spawn } = require('child_process');
 
-const SERVER_URL = 'http://127.0.0.1:3000/health';
+const SERVER_ENTRY = process.env.SERVER_ENTRY || 'server.js';
+const SERVER_PORT = process.env.SERVER_PORT || '3000';
+const SERVER_URL = process.env.HEALTH_URL || `http://127.0.0.1:${SERVER_PORT}/health`;
 const START_TIMEOUT_MS = 20000;
 
 async function sleep(ms) {
@@ -33,8 +35,12 @@ async function waitForHealth() {
 }
 
 async function main() {
-  const server = spawn(process.execPath, ['server.js'], {
-    stdio: ['ignore', 'pipe', 'pipe']
+  const server = spawn(process.execPath, [SERVER_ENTRY], {
+    stdio: ['ignore', 'pipe', 'pipe'],
+    env: {
+      ...process.env,
+      PORT: process.env.PORT || SERVER_PORT
+    }
   });
 
   server.stdout.on('data', (chunk) => process.stdout.write(`[server] ${chunk}`));

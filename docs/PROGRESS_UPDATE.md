@@ -1,12 +1,18 @@
 # Dealer Dev Ops - Progress Update
 
-**Last Updated**: 2025-02-13
+**Last Updated**: 2026-02-14
 
 ---
 
 ## 🎯 **Current State: PRODUCTION READY** ✅
 
 **Status**: All core features complete, automated test suite built, CI/CD configured, deployment documentation ready.
+
+## Deployment Direction (Current)
+
+- Dealer Dev Ops app in this repository is VPS-hosted.
+- Azure resources are reserved for separate Dealer SaaS and chatbot properties.
+- VPS runbook: `docs/VPS_DEPLOY.md`
 
 ---
 
@@ -16,7 +22,7 @@
 **Architecture**: Full-stack Node.js application (Express + PostgreSQL/SQLite)
 **Crawler**: Production-ready with HTTP + Puppeteer auto-fallback
 **Testing**: Jest-based automated test suite (145+ test cases)
-**Deployment**: Azure-ready, Docker containerized, GitHub Actions CI/CD
+**Deployment**: VPS-first deployment with optional Docker and systemd automation
 
 ---
 
@@ -24,7 +30,7 @@
 
 ### **Dual Runtime Support**
 1. **SQLite** (via `server.js`) - Local development
-2. **PostgreSQL** (via `server_pg.js`) - Production cloud deployment
+2. **PostgreSQL** (via `server_pg.js`) - VPS production runtime
 3. **TypeScript API layer** (via `src/`) - Type-checked domain layer (inactive)
 
 ### **Database Layer**

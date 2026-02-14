@@ -1,6 +1,15 @@
 # Azure Setup Guide (Dealer Dev Ops)
 
-This guide is for running Dealer Dev Ops fully on Azure, including cloud DB.
+This guide is now a reference for Azure components used by your separate Dealer SaaS/chatbot stack.
+Dealer Dev Ops itself is hosted on your VPS.
+
+For VPS deployment steps for this app, use `docs/VPS_DEPLOY.md`.
+
+## Deployment Split (Current)
+
+- Dealer Dev Ops app (this repo): VPS-hosted
+- Dealer SaaS + Chatbot site: Azure-hosted
+- Azure PostgreSQL can still be used as DB for this app if desired (`DATABASE_URL`)
 
 ## Target Azure Architecture
 
@@ -144,7 +153,11 @@ az webapp config appsettings set \
   --settings \
     NODE_ENV=production \
     PORT=3000 \
-    DATABASE_URL="<DATABASE_URL>"
+    DATABASE_URL="<DATABASE_URL>" \
+    DB_SSL=true \
+    DB_POOL_MAX=20 \
+    DB_POOL_IDLE_TIMEOUT_MS=30000 \
+    DB_POOL_CONNECTION_TIMEOUT_MS=5000
 ```
 
 ---
@@ -239,6 +252,10 @@ Optional:
 
 - `CORS_ORIGINS` (comma-separated allowlist)
 - `RATE_LIMIT_MAX`
+- `DB_POOL_MAX`
+- `DB_POOL_IDLE_TIMEOUT_MS`
+- `DB_POOL_CONNECTION_TIMEOUT_MS`
+- `DB_POOL_MAX_USES`
 - future chatbot/model keys (prefer Key Vault references)
 
 ---
@@ -253,5 +270,6 @@ Optional:
 6. Deploy app
 7. Verify:
    - `/api/health`
+   - `/api/health/db`
    - `/api/dealerships/overview`
    - `/api/inventory`

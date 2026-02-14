@@ -6,17 +6,21 @@ const DatabasePG = require('./db_pg');
 const scraper = require('./scraper');
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT || 3000);
 
 const allowedOrigins = (process.env.CORS_ORIGINS || '')
   .split(',')
   .map(origin => origin.trim())
   .filter(Boolean);
+const isProduction = process.env.NODE_ENV === 'production';
 
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    if (!isProduction && allowedOrigins.length === 0) {
       return callback(null, true);
     }
     return callback(new Error('Origin not allowed by CORS'));
@@ -399,6 +403,43 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
+app.get('/api/health/db', async (req, res) => {
+  try {
+    await db.pool.query('SELECT 1');
+    res.json({
+      success: true,
+      status: 'healthy',
+      pool: db.getPoolStats(),
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(503).json({
+      success: false,
+      status: 'unhealthy',
+      message: error.message,
+      pool: db.getPoolStats(),
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+let shuttingDown = false;
+async function shutdown(signal) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log(`[server] ${signal} received, closing resources...`);
+  try {
+    await db.close();
+    process.exit(0);
+  } catch (error) {
+    console.error('[server] Graceful shutdown failed:', error.message);
+    process.exit(1);
+  }
+}
+
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
 
 app.listen(PORT, () => {
   console.log(`🚗 Car Scraper Dashboard running at http://localhost:${PORT}`);

@@ -1,4 +1,4 @@
-const { Pool } = require('pg');
+const { createPool, getPoolConfig } = require('./pg_pool');
 
 class ValidationError extends Error {
   constructor(message) {
@@ -10,13 +10,8 @@ class ValidationError extends Error {
 
 class CarDatabase {
   constructor() {
-    // PostgreSQL connection
-    this.pool = new Pool({
-      connectionString: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/summit_auto',
-      max: 20, // Maximum pool size
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 2000,
-    });
+    this.pool = createPool();
+    this.poolConfig = getPoolConfig();
   }
 
   async init() {
@@ -527,6 +522,17 @@ class CarDatabase {
     console.log('Database connection closed');
   }
 
+  getPoolStats() {
+    return {
+      max: this.poolConfig.max,
+      idleTimeoutMillis: this.poolConfig.idleTimeoutMillis,
+      connectionTimeoutMillis: this.poolConfig.connectionTimeoutMillis,
+      totalCount: this.pool.totalCount,
+      idleCount: this.pool.idleCount,
+      waitingCount: this.pool.waitingCount
+    };
+  }
+
   async getDealershipOverview() {
     const dealers = await this.pool.query(`
       SELECT
@@ -738,6 +744,10 @@ class CarDatabase {
 
   async ensureIngestionIndexes() {
     try {
+      await this.pool.query('CREATE INDEX IF NOT EXISTS idx_vehicles_vin ON vehicles (vin)');
+      await this.pool.query('CREATE INDEX IF NOT EXISTS idx_vehicles_price ON vehicles (price)');
+      await this.pool.query('CREATE INDEX IF NOT EXISTS idx_vehicles_year ON vehicles (year)');
+      await this.pool.query('CREATE INDEX IF NOT EXISTS idx_vehicles_make ON vehicles (make)');
       await this.pool.query(`
         CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_dealer_stock
         ON vehicles (dealer_id, stock_number)

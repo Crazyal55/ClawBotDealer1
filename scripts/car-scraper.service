@@ -1,14 +1,18 @@
 [Unit]
-Description=Car Scraper Dashboard
+Description=Dealer Dev Ops API
 After=network.target
 
 [Service]
 Type=simple
-User=alex
-WorkingDirectory=/home/alex/.openclaw/workspace/car-scraper
-ExecStart=/usr/bin/node /home/alex/.openclaw/workspace/car-scraper/server.js
+User=dealerdevops
+Group=dealerdevops
+WorkingDirectory=/opt/dealer-dev-ops
+EnvironmentFile=/etc/dealer-dev-ops.env
+ExecStart=/usr/bin/npm run start:pg
 Restart=on-failure
 RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=30
 
 [Install]
 WantedBy=multi-user.target

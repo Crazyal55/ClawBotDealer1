@@ -2,6 +2,11 @@
 
 This repository currently runs on `server.js` with SQLite (`cars.db`) as the active local runtime.
 
+## Hosting Decision
+
+- This app (Dealer Dev Ops data/scraper platform) is hosted on your VPS.
+- Azure is reserved for the separate Dealer SaaS + chatbot site.
+
 ## Runtime Target
 
 - Active runtime: `server.js` (Node.js + Express + SQLite)
@@ -66,13 +71,19 @@ Notes:
 ## Documentation
 
 - Progress tracker: `docs/PROGRESS_UPDATE.md`
-- Azure cloud setup runbook: `docs/AZURE_SETUP.md`
+- VPS deployment runbook: `docs/VPS_DEPLOY.md`
+- Azure reference runbook (for separate SaaS/chatbot stack): `docs/AZURE_SETUP.md`
 
 ## Production Readiness Files
 
-- `Dockerfile` - production container image for Azure Web App
+- `Dockerfile` - production container image (usable on VPS)
 - `.env.production.example` - production env template (no secrets committed)
-- `.github/workflows/azure-webapp.yaml` - CI/CD workflow (type-check + smoke + deploy)
+- `.github/workflows/azure-webapp.yaml` - optional Azure CI/CD workflow for separate stack
+- `pg_pool.js` - PostgreSQL connection pooling framework (env-driven)
+- `docs/VPS_DEPLOY.md` - VPS deployment guide (systemd + Nginx + TLS)
+- `scripts/deploy_vps.sh` - VPS deploy/update script
+- `scripts/car-scraper.service` - systemd unit template
+- `scripts/nginx-dealer-dev-ops.conf` - Nginx reverse proxy template
 
 ## Current Architecture
 
@@ -100,3 +111,4 @@ Notes:
 - `server_pg.js` and TS/Postgres files remain in the repo for future migration work.
 - If you switch active runtime later, update `package.json` scripts and this README together.
 - Security defaults now include `helmet`, API rate limiting, and CORS origin allowlisting via `CORS_ORIGINS`.
+- PostgreSQL runtime now exposes pool health at `GET /api/health/db`.

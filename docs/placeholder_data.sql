@@ -83,8 +83,10 @@ CREATE TABLE vehicles (
 );
 
 -- Indexes for fast filtering
+CREATE INDEX idx_vin ON vehicles(vin);
 CREATE INDEX idx_price ON vehicles(price);
 CREATE INDEX idx_year ON vehicles(year);
+CREATE INDEX idx_make ON vehicles(make);
 CREATE INDEX idx_make_model ON vehicles(make, model);
 CREATE INDEX idx_dealer ON vehicles(dealer_id);
 CREATE INDEX idx_location ON vehicles(location_id);

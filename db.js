@@ -50,6 +50,7 @@ class CarDatabase {
 
         this.db.run('CREATE INDEX IF NOT EXISTS idx_inventory_scraped_at ON inventory(scraped_at DESC)');
         this.db.run('CREATE INDEX IF NOT EXISTS idx_inventory_vin ON inventory(vin)');
+        this.db.run('CREATE INDEX IF NOT EXISTS idx_inventory_make ON inventory(make)');
         this.db.run('CREATE INDEX IF NOT EXISTS idx_inventory_make_model ON inventory(make, model)');
         this.db.run('CREATE INDEX IF NOT EXISTS idx_inventory_year ON inventory(year)');
         this.db.run('CREATE INDEX IF NOT EXISTS idx_inventory_price ON inventory(price)');
