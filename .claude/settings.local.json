@@ -7,7 +7,10 @@
       "Bash(sqlite3:*)",
       "Bash(node:*)",
       "Bash(netstat:*)",
-      "Bash(npm run ci:*)"
+      "Bash(npm run ci:*)",
+      "Bash(tasklist:*)",
+      "Bash(taskkill:*)",
+      "Bash(npm install:*)"
     ]
   }
 }

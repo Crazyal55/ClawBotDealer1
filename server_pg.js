@@ -12,6 +12,20 @@ app.use(express.static('public'));
 
 const db = new DatabasePG();
 
+function handleApiError(res, error, defaultMessage) {
+  if (error?.code === '23505') {
+    return res.status(409).json({
+      success: false,
+      message: 'Record violates a unique constraint (likely duplicate VIN or stock number for dealership).'
+    });
+  }
+  const status = error?.statusCode || 500;
+  return res.status(status).json({
+    success: false,
+    message: error?.message || defaultMessage
+  });
+}
+
 // Initialize database
 db.init().then(() => {
   console.log('✅ Database initialized');
@@ -24,11 +38,45 @@ db.init().then(() => {
 
 app.get('/api/inventory', async (req, res) => {
   try {
-    const inventory = await db.getAllInventory();
+    const inventory = await db.getAllInventory({
+      dealerId: req.query.dealerId,
+      locationId: req.query.locationId,
+      make: req.query.make,
+      model: req.query.model,
+      drivetrain: req.query.drivetrain,
+      minPrice: req.query.minPrice,
+      maxPrice: req.query.maxPrice
+    });
     res.json(inventory);
   } catch (error) {
     console.error('Error fetching inventory:', error);
     res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.post('/api/inventory', async (req, res) => {
+  try {
+    const created = await db.createInventory(req.body || {});
+    res.status(201).json({
+      success: true,
+      data: created
+    });
+  } catch (error) {
+    console.error('Error creating inventory:', error);
+    handleApiError(res, error, 'Create inventory failed');
+  }
+});
+
+app.put('/api/inventory/:id', async (req, res) => {
+  try {
+    const updated = await db.updateInventory(parseInt(req.params.id, 10), req.body || {});
+    if (!updated) {
+      return res.status(404).json({ success: false, message: 'Not found' });
+    }
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('Error updating inventory:', error);
+    handleApiError(res, error, 'Update inventory failed');
   }
 });
 
@@ -47,12 +95,13 @@ app.post('/api/scrape', async (req, res) => {
 
   try {
     const result = await scraper.fromCurl(curlCommand, sourceName);
-    const saved = await db.saveInventory(result);
+    const savedResult = await db.saveInventory(result);
 
     res.json({
       success: true,
       message: `Scraped ${result.cars.length} cars`,
-      data: saved
+      data: savedResult.records,
+      metrics: savedResult.metrics
     });
   } catch (error) {
     console.error('Scraping error:', error);
@@ -76,6 +125,7 @@ app.post('/api/scrape/batch', async (req, res) => {
   const results = [];
   let totalCars = 0;
   let failed = 0;
+  const aggregateMetrics = { inserted: 0, updated: 0, skipped: 0 };
 
   try {
     const batchSize = 5;
@@ -87,12 +137,16 @@ app.post('/api/scrape/batch', async (req, res) => {
 
       for (const result of batchResults) {
         if (result.status === 'fulfilled') {
-          const saved = await db.saveInventory(result.value);
+          const savedResult = await db.saveInventory(result.value);
           totalCars += result.value.cars.length;
+          aggregateMetrics.inserted += savedResult.metrics.inserted;
+          aggregateMetrics.updated += savedResult.metrics.updated;
+          aggregateMetrics.skipped += savedResult.metrics.skipped;
           results.push({
             success: true,
             cars: result.value.cars.length,
-            url: result.value.url
+            url: result.value.url,
+            metrics: savedResult.metrics
           });
         } else {
           failed++;
@@ -110,6 +164,7 @@ app.post('/api/scrape/batch', async (req, res) => {
       totalCars,
       totalSources: curlCommands.length,
       failed,
+      metrics: aggregateMetrics,
       results
     });
   } catch (error) {
@@ -198,6 +253,30 @@ app.get('/api/stats', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching stats:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.get('/api/dealerships/overview', async (req, res) => {
+  try {
+    const overview = await db.getDealershipOverview();
+    res.json({
+      success: true,
+      ...overview
+    });
+  } catch (error) {
+    console.error('Error getting dealership overview:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.get('/api/quality/verify', async (req, res) => {
+  try {
+    const limit = req.query.limit ? parseInt(req.query.limit, 10) : 200;
+    const result = await db.runDataQualityVerification(limit);
+    res.json({ success: true, ...result });
+  } catch (error) {
+    console.error('Error running quality verification:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });

@@ -2,6 +2,7 @@ const axios = require('axios');
 const URLDiscoverer = require('./crawler/url-discoverer');
 const RequestQueue = require('./crawler/request-queue');
 const SessionManager = require('./crawler/session-manager');
+const BrowserRenderer = require('./crawler/browser-renderer');
 const scraper = require('./scraper');
 
 /**
@@ -28,6 +29,10 @@ class CarInventoryCrawler {
     this.session = new SessionManager({
       timeout: options.timeout || 30000
     });
+
+    // Browser rendering (lazy init)
+    this.browserRenderer = null;
+    this.browserRendererInit = false;
 
     // Progress callback
     this.onProgress = options.onProgress || null;
@@ -78,14 +83,17 @@ class CarInventoryCrawler {
       this.pagesCrawled++;
 
       try {
-        // Fetch the page
-        const response = await this.session.request(url);
-        const html = response.data;
+        // Fetch the page (with optional browser fallback)
+        const { data: html, status, usedBrowser } = await this._fetchPage(url, sourceName);
+
+        if (usedBrowser) {
+          console.log(`[Crawler] Used browser rendering for ${url}`);
+        }
 
         // Detect page type
         const pageType = this.urlDiscoverer.detectPageType(html, url);
 
-        console.log(`[Crawler] ${url} - ${pageType.toUpperCase()} (${response.status})`);
+        console.log(`[Crawler] ${url} - ${pageType.toUpperCase()} (${status})`);
 
         if (pageType === 'vdp') {
           this.vdpPages++;
@@ -300,6 +308,130 @@ class CarInventoryCrawler {
       maxPages: this.maxPages,
       maxVehicles: this.maxVehicles
     };
+  }
+
+  /**
+   * Get or initialize browser renderer
+   * @returns {Promise<BrowserRenderer>}
+   */
+  async _getBrowserRenderer() {
+    if (this.browserRendererInit && !this.browserRenderer) {
+      throw new Error('Browser renderer failed to initialize');
+    }
+
+    if (!this.browserRenderer) {
+      this.browserRendererInit = true;
+
+      if (this.usePuppeteer === 'never') {
+        console.log('[Crawler] Puppeteer disabled by configuration');
+        return null;
+      }
+
+      try {
+        this.browserRenderer = new BrowserRenderer({
+          timeout: 30000,
+          headless: true
+        });
+        await this.browserRenderer.init();
+        console.log('[Crawler] Browser renderer initialized');
+      } catch (error) {
+        console.error('[Crawler] Failed to initialize browser renderer:', error.message);
+        this.browserRenderer = null;
+        if (this.usePuppeteer === 'always') {
+          throw error;
+        }
+      }
+    }
+
+    return this.browserRenderer;
+  }
+
+  /**
+   * Fetch a page (with optional Puppeteer fallback)
+   * @param {string} url - URL to fetch
+   * @param {string} source - Source name
+   * @returns {Promise<{data: string, status: number, usedBrowser: boolean}>}
+   */
+  async _fetchPage(url, source) {
+    let html, status, usedBrowser = false;
+
+    // Decide whether to use browser
+    const shouldUseBrowser = this.usePuppeteer === 'always' ||
+      (this.usePuppeteer === 'auto' && this._shouldTryBrowser(url));
+
+    // Try HTTP first (unless browser is forced)
+    if (this.usePuppeteer !== 'always') {
+      try {
+        console.log(`[Crawler] Fetching via HTTP: ${url}`);
+        const response = await this.session.request(url);
+        html = response.data;
+        status = response.status;
+
+        // Check if we need to fallback to browser
+        if (shouldUseBrowser && this._shouldFallbackToBrowser(html, url)) {
+          console.log(`[Crawler] Falling back to browser: ${url}`);
+          throw new Error('NEEDS_BROWSER');
+        }
+
+        return { data: html, status, usedBrowser: false };
+
+      } catch (error) {
+        if (error.message === 'NEEDS_BROWSER' || shouldUseBrowser) {
+          // Fall through to browser rendering
+          console.log(`[Crawler] HTTP failed, trying browser: ${url}`);
+        } else {
+          throw error; // Re-throw non-browser errors
+        }
+      }
+    }
+
+    // Use browser rendering
+    if (shouldUseBrowser) {
+      const renderer = await this._getBrowserRenderer();
+      if (renderer) {
+        const result = await renderer.fetch(url, {
+          timeout: 30000,
+          headers: this.session.getHeaders()
+        });
+        return {
+          data: result.html,
+          status: result.status,
+          usedBrowser: true
+        };
+      }
+    }
+
+    throw new Error('Failed to fetch page');
+  }
+
+  /**
+   * Check if we should try browser rendering for a URL
+   * @param {string} url - URL to check
+   * @returns {boolean}
+   */
+  _shouldTryBrowser(url) {
+    return BrowserRenderer.needsBrowser(url);
+  }
+
+  /**
+   * Check if HTML suggests we should fallback to browser
+   * @param {string} html - HTML content
+   * @param {string} url - URL
+   * @returns {boolean}
+   */
+  _shouldFallbackToBrowser(html, url) {
+    return BrowserRenderer.needsBrowser(url, html);
+  }
+
+  /**
+   * Close browser and cleanup resources
+   * @returns {Promise<void>}
+   */
+  async close() {
+    if (this.browserRenderer) {
+      await this.browserRenderer.close();
+      this.browserRenderer = null;
+    }
   }
 }
 

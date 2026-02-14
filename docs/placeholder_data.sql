@@ -91,6 +91,11 @@ CREATE INDEX idx_location ON vehicles(location_id);
 CREATE INDEX idx_availability ON vehicles(availability);
 CREATE INDEX idx_quality ON vehicles(quality_score);
 CREATE INDEX idx_stock ON vehicles(stock_number);
+CREATE INDEX idx_url ON vehicles(url);
+CREATE INDEX idx_dealer_url ON vehicles(dealer_id, url);
+CREATE UNIQUE INDEX idx_unique_dealer_stock
+ON vehicles(dealer_id, stock_number)
+WHERE stock_number IS NOT NULL;
 
 -- Insert Fake Dealership
 INSERT INTO dealers (name, website_url, business_id) VALUES

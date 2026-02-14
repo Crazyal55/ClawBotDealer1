@@ -551,6 +551,51 @@
             background: var(--bg-input);
         }
 
+        .chat-sim-wrap {
+            margin-top: var(--spacing-md);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            background: var(--bg-elevated);
+            overflow: hidden;
+        }
+
+        .chat-log {
+            max-height: 320px;
+            overflow-y: auto;
+            padding: var(--spacing-md);
+            display: grid;
+            gap: 10px;
+        }
+
+        .chat-msg {
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.35;
+            max-width: 80%;
+        }
+
+        .chat-msg.user {
+            margin-left: auto;
+            background: var(--bg-active);
+            color: var(--text-primary);
+            border: 1px solid var(--border-focus);
+        }
+
+        .chat-msg.bot {
+            margin-right: auto;
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .chat-controls {
+            border-top: 1px solid var(--border-subtle);
+            padding: var(--spacing-md);
+            display: grid;
+            gap: var(--spacing-sm);
+        }
+
         /* Option Tabs */
         .option-tabs {
             display: grid;
@@ -720,6 +765,10 @@
                     <span>🗄️</span>
                     Database
                 </div>
+                <div class="nav-item" onclick="selectTab('dealership', this)">
+                    <span>Deal</span>
+                    Dealerships
+                </div>
             </div>
 
             <div class="nav-section">
@@ -743,6 +792,10 @@
 
             <div class="nav-section">
                 <div class="nav-label">Platform</div>
+                <div class="nav-item" onclick="selectTab('chatbot', this)">
+                    <span>Chat</span>
+                    Chatbot
+                </div>
                 <div class="nav-item coming-soon">
                     <span>👥</span>
                     Customers
@@ -833,17 +886,17 @@
                         <span class="status-badge active">Live</span>
                     </div>
                     <p class="panel-subtitle">Platform Overview</p>
-                    <div style="color: var(--text-muted);">Summary page for scraping throughput, inventory health, and DB quality signals.</div>
+                    <div style="color: var(--text-muted);">Multi-business overview for scraping throughput, inventory health, and DB quality signals.</div>
                     <div class="split-grid">
                         <div class="info-card">
-                            <div class="info-title">Latest Scrape</div>
-                            <div class="info-value">Cars.com - Austin</div>
-                            <div style="color: var(--text-muted); font-size: 12px; margin-top: 8px;">Completed 18 minutes ago, 14 vehicles parsed.</div>
+                            <div class="info-title">Businesses Tracked</div>
+                            <div class="info-value">2 Active Groups</div>
+                            <div style="color: var(--text-muted); font-size: 12px; margin-top: 8px;">Summit Automotive Group, Metro Auto Holdings</div>
                         </div>
                         <div class="info-card">
-                            <div class="info-title">Data Health</div>
-                            <div class="info-value">93% Fields Complete</div>
-                            <div style="color: var(--text-muted); font-size: 12px; margin-top: 8px;">Missing fields concentrated in mileage and trim.</div>
+                            <div class="info-title">Locations Tracked</div>
+                            <div class="info-value">4 Locations</div>
+                            <div style="color: var(--text-muted); font-size: 12px; margin-top: 8px;">Denver, Aurora, Lakewood, Dallas</div>
                         </div>
                     </div>
                 </div>
@@ -1049,6 +1102,119 @@
                 </div>
             </div>
 
+            <div class="page" id="page-dealership" style="display: none;">
+                <div class="content-panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Dealership Navigation</h2>
+                        <div class="panel-actions"><button class="btn btn-secondary">Refresh Snapshot</button></div>
+                    </div>
+                    <p class="panel-subtitle">Sort and filter by business, location, and operating measures.</p>
+                    <div class="table-toolbar">
+                        <select id="dealership-business-filter" class="env-selector" onchange="applyDealershipFilters()">
+                            <option value="">All Businesses</option>
+                        </select>
+                        <select id="dealership-location-filter" class="env-selector" onchange="applyDealershipFilters()">
+                            <option value="">All Locations</option>
+                        </select>
+                        <select id="dealership-sort-field" class="env-selector" onchange="applyDealershipFilters()">
+                            <option value="vehicle_count">Sort: Vehicle Count</option>
+                            <option value="avg_quality">Sort: Avg Quality</option>
+                            <option value="avg_price">Sort: Avg Price</option>
+                        </select>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="data-table" id="dealership-table">
+                            <thead>
+                                <tr>
+                                    <th>Business</th>
+                                    <th>Location</th>
+                                    <th>Vehicles</th>
+                                    <th>Avg Quality</th>
+                                    <th>Avg Price</th>
+                                    <th>AWD/4WD %</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dealership-table-body">
+                                <tr data-business="Summit Automotive Group" data-location="Denver" data-vehicle_count="22" data-avg_quality="87" data-avg_price="36500">
+                                    <td>Summit Automotive Group</td><td>Denver</td><td>22</td><td>87</td><td>$36,500</td><td>54%</td>
+                                </tr>
+                                <tr data-business="Summit Automotive Group" data-location="Aurora" data-vehicle_count="18" data-avg_quality="79" data-avg_price="31400">
+                                    <td>Summit Automotive Group</td><td>Aurora</td><td>18</td><td>79</td><td>$31,400</td><td>41%</td>
+                                </tr>
+                                <tr data-business="Summit Automotive Group" data-location="Lakewood" data-vehicle_count="19" data-avg_quality="90" data-avg_price="42800">
+                                    <td>Summit Automotive Group</td><td>Lakewood</td><td>19</td><td>90</td><td>$42,800</td><td>68%</td>
+                                </tr>
+                                <tr data-business="Metro Auto Holdings" data-location="Dallas" data-vehicle_count="27" data-avg_quality="84" data-avg_price="33850">
+                                    <td>Metro Auto Holdings</td><td>Dallas</td><td>27</td><td>84</td><td>$33,850</td><td>49%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page" id="page-chatbot" style="display: none;">
+                <div class="content-panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Chatbot</h2>
+                        <div class="panel-actions"><button class="btn btn-primary">Start Test Chat</button></div>
+                    </div>
+                    <p class="panel-subtitle">Inventory-aware assistant (starter profile: ChatGPT Nano or equivalent model).</p>
+                    <div class="split-grid">
+                        <div class="info-card">
+                            <div class="info-title">Model Profile</div>
+                            <div class="info-value">chatgpt-nano (planned)</div>
+                            <div style="color: var(--text-muted); font-size: 12px; margin-top: 8px;">Low-latency assistant for inventory Q&A and lead routing.</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-title">Knowledge Source</div>
+                            <div class="info-value">SQL Inventory</div>
+                            <div style="color: var(--text-muted); font-size: 12px; margin-top: 8px;">Reads vehicles/dealers/locations with filter-first retrieval.</div>
+                        </div>
+                    </div>
+                    <div class="table-wrap" style="margin-top: var(--spacing-md);">
+                        <table class="data-table">
+                            <thead><tr><th>Capability</th><th>Status</th><th>Notes</th></tr></thead>
+                            <tbody>
+                                <tr><td>Inventory Q&A</td><td>Planned</td><td>Answer from SQL fields and quality flags</td></tr>
+                                <tr><td>Location-aware suggestions</td><td>Planned</td><td>Filter by dealership/location context</td></tr>
+                                <tr><td>Lead handoff</td><td>Planned</td><td>Attach customer + transcript to CRM workflow</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="panel-header" style="margin-top: var(--spacing-lg);">
+                        <h2 class="panel-title">Static Chat Simulator</h2>
+                        <div class="panel-actions"><button class="btn btn-secondary" onclick="resetChatSimulator()">Reset</button></div>
+                    </div>
+                    <p class="panel-subtitle">Demo conversation flow before backend model wiring.</p>
+
+                    <div class="table-toolbar">
+                        <select id="chat-sim-business" class="env-selector">
+                            <option value="Summit Automotive Group">Business: Summit Automotive Group</option>
+                            <option value="Metro Auto Holdings">Business: Metro Auto Holdings</option>
+                        </select>
+                        <select id="chat-sim-location" class="env-selector">
+                            <option value="Denver">Location: Denver</option>
+                            <option value="Aurora">Location: Aurora</option>
+                            <option value="Lakewood">Location: Lakewood</option>
+                            <option value="Dallas">Location: Dallas</option>
+                        </select>
+                    </div>
+
+                    <div class="chat-sim-wrap">
+                        <div id="chat-sim-log" class="chat-log"></div>
+                        <div class="chat-controls">
+                            <input id="chat-sim-input" type="text" class="search-input" placeholder="Ask about inventory, price range, AWD options, etc." onkeydown="if(event.key==='Enter'){sendChatSimulatorMessage();}">
+                            <div style="display: flex; gap: var(--spacing-sm);">
+                                <button class="btn btn-primary" onclick="sendChatSimulatorMessage()">Send</button>
+                                <button class="btn btn-secondary" onclick="simulateLeadHandoff()">Simulate Lead Handoff</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="page" id="page-settings" style="display: none;">
                 <div class="content-panel">
                     <div class="panel-header">
@@ -1074,6 +1240,50 @@
                             <div class="info-value">unknown</div>
                         </div>
                     </div>
+
+                    <div class="panel-header" style="margin-top: var(--spacing-lg);">
+                        <h2 class="panel-title">Chatbot Dashboard</h2>
+                        <div class="panel-actions"><button class="btn btn-secondary">Export Transcripts</button></div>
+                    </div>
+                    <p class="panel-subtitle">Monitor conversations, customer interactions, and setup wizard progress.</p>
+
+                    <div class="split-grid">
+                        <div class="info-card">
+                            <div class="info-title">Past Chats (7d)</div>
+                            <div class="info-value">124</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-title">Unique Customers</div>
+                            <div class="info-value">49</div>
+                        </div>
+                    </div>
+
+                    <div class="table-wrap" style="margin-top: var(--spacing-md);">
+                        <table class="data-table">
+                            <thead><tr><th>Chat ID</th><th>Customer</th><th>Intent</th><th>Business</th><th>Location</th><th>Status</th></tr></thead>
+                            <tbody>
+                                <tr><td>CHAT-1024</td><td>Sarah M.</td><td>Find AWD SUV under $35k</td><td>Summit Automotive Group</td><td>Denver</td><td>Closed</td></tr>
+                                <tr><td>CHAT-1025</td><td>Mike R.</td><td>Compare F-150 vs Silverado</td><td>Summit Automotive Group</td><td>Lakewood</td><td>Escalated</td></tr>
+                                <tr><td>CHAT-1026</td><td>Anna T.</td><td>Schedule test drive</td><td>Metro Auto Holdings</td><td>Dallas</td><td>Open</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="panel-header" style="margin-top: var(--spacing-lg);">
+                        <h2 class="panel-title">Chatbot Setup Wizard</h2>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="data-table">
+                            <thead><tr><th>Step</th><th>Configuration</th><th>Current Value</th></tr></thead>
+                            <tbody>
+                                <tr><td>1</td><td>Model</td><td>chatgpt-nano (draft)</td></tr>
+                                <tr><td>2</td><td>System Persona</td><td>Inventory Sales Assistant</td></tr>
+                                <tr><td>3</td><td>Allowed Data Fields</td><td>price, make, model, drivetrain, location, quality</td></tr>
+                                <tr><td>4</td><td>Escalation Rule</td><td>handoff when user asks financing/test drive</td></tr>
+                                <tr><td>5</td><td>Response Style</td><td>concise + inventory-grounded</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1094,11 +1304,16 @@
             }
 
             const route = tabName;
-            const pages = ['dashboard', 'scraper', 'inventory', 'quality', 'database', 'settings'];
+            const pages = ['dashboard', 'scraper', 'inventory', 'quality', 'database', 'dealership', 'chatbot', 'settings'];
             pages.forEach((name) => {
                 const page = document.getElementById(`page-${name}`);
                 if (page) page.style.display = name === route ? 'block' : 'none';
             });
+
+            if (route === 'dealership') {
+                loadDealershipOverview();
+                applyDealershipFilters();
+            }
         }
 
         function filterDatabaseTable(searchValue) {
@@ -1129,6 +1344,176 @@
                 checkbox.addEventListener('change', applyDatabaseFieldVisibility);
             });
             applyDatabaseFieldVisibility();
+        }
+
+        function parseDealershipMetric(row, field) {
+            const raw = row.getAttribute(`data-${field}`);
+            const value = Number(raw);
+            return Number.isFinite(value) ? value : 0;
+        }
+
+        function formatCurrency(value) {
+            const n = Number(value);
+            if (!Number.isFinite(n)) return '$0';
+            return `$${n.toLocaleString()}`;
+        }
+
+        function safePercent(value) {
+            const n = Number(value);
+            if (!Number.isFinite(n)) return '0%';
+            return `${Math.max(0, Math.min(100, Math.round(n)))}%`;
+        }
+
+        function populateSelectOptions(selectId, values, placeholder) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+            const current = select.value;
+            select.innerHTML = '';
+
+            const base = document.createElement('option');
+            base.value = '';
+            base.textContent = placeholder;
+            select.appendChild(base);
+
+            values.forEach((value) => {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = value;
+                select.appendChild(option);
+            });
+
+            if (current && values.includes(current)) {
+                select.value = current;
+            }
+        }
+
+        async function loadDealershipOverview() {
+            try {
+                const response = await fetch('/api/dealerships/overview');
+                if (!response.ok) return;
+                const payload = await response.json();
+                if (!payload.success) return;
+
+                const businesses = Array.isArray(payload.businesses) ? payload.businesses : [];
+                const locations = Array.isArray(payload.locations) ? payload.locations : [];
+                const businessMap = new Map(businesses.map((b) => [String(b.id), b]));
+                const tbody = document.getElementById('dealership-table-body');
+                if (!tbody || locations.length === 0) return;
+
+                tbody.innerHTML = '';
+                const businessNames = new Set();
+                const locationNames = new Set();
+
+                locations.forEach((loc) => {
+                    const business = businessMap.get(String(loc.dealer_id));
+                    const businessName = business?.name || 'Unknown Business';
+                    const locationName = loc.city || loc.name || 'Unknown Location';
+                    businessNames.add(businessName);
+                    locationNames.add(locationName);
+
+                    const vehicleCount = Number(loc.vehicle_count || 0);
+                    const avgQuality = Number(loc.avg_quality || 0);
+                    const avgPrice = Number(loc.avg_price || 0);
+                    const estimatedAwd4wd = avgQuality >= 88 ? 60 : avgQuality >= 80 ? 50 : 40;
+
+                    const tr = document.createElement('tr');
+                    tr.setAttribute('data-business', businessName);
+                    tr.setAttribute('data-location', locationName);
+                    tr.setAttribute('data-vehicle_count', String(vehicleCount));
+                    tr.setAttribute('data-avg_quality', String(avgQuality));
+                    tr.setAttribute('data-avg_price', String(avgPrice));
+                    tr.innerHTML = `
+                        <td>${businessName}</td>
+                        <td>${locationName}</td>
+                        <td>${vehicleCount}</td>
+                        <td>${avgQuality.toFixed(1)}</td>
+                        <td>${formatCurrency(avgPrice)}</td>
+                        <td>${safePercent(estimatedAwd4wd)}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                populateSelectOptions('dealership-business-filter', Array.from(businessNames).sort(), 'All Businesses');
+                populateSelectOptions('dealership-location-filter', Array.from(locationNames).sort(), 'All Locations');
+            } catch (error) {
+                // Keep static sample rows/options if backend is unavailable.
+            }
+        }
+
+        function applyDealershipFilters() {
+            const business = document.getElementById('dealership-business-filter')?.value || '';
+            const location = document.getElementById('dealership-location-filter')?.value || '';
+            const sortField = document.getElementById('dealership-sort-field')?.value || 'vehicle_count';
+            const table = document.getElementById('dealership-table');
+            if (!table) return;
+
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+
+            rows.forEach((row) => {
+                const matchBusiness = !business || row.getAttribute('data-business') === business;
+                const matchLocation = !location || row.getAttribute('data-location') === location;
+                row.style.display = matchBusiness && matchLocation ? '' : 'none';
+            });
+
+            rows.sort((a, b) => parseDealershipMetric(b, sortField) - parseDealershipMetric(a, sortField));
+            rows.forEach((row) => tbody.appendChild(row));
+        }
+
+        function addChatMessage(role, text) {
+            const log = document.getElementById('chat-sim-log');
+            if (!log) return;
+            const div = document.createElement('div');
+            div.className = `chat-msg ${role}`;
+            div.textContent = text;
+            log.appendChild(div);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function getChatSimulatorResponse(message) {
+            const business = document.getElementById('chat-sim-business')?.value || 'Summit Automotive Group';
+            const location = document.getElementById('chat-sim-location')?.value || 'Denver';
+            const m = message.toLowerCase();
+
+            if (m.includes('awd') || m.includes('4wd') || m.includes('snow') || m.includes('powertrain')) {
+                return `At ${business} (${location}), I can prioritize AWD/4WD inventory. Example matches: 2019 Toyota RAV4 AWD, 2022 Mazda CX-5 AWD, 2021 Ford F-150 4WD.`;
+            }
+            if (m.includes('under') || m.includes('$') || m.includes('budget') || m.includes('price')) {
+                return `For ${location}, budget-friendly options under $35k include RAV4 ($26,995), Civic Touring ($22,995), and Model 3 ($32,995).`;
+            }
+            if (m.includes('suv')) {
+                return `SUV options in ${location}: Toyota RAV4, Mazda CX-5, Jeep Cherokee, and Toyota Highlander. I can filter by AWD, mileage, and quality score.`;
+            }
+            if (m.includes('test drive') || m.includes('schedule')) {
+                return `I can start a test-drive request for ${business} - ${location}. Use "Simulate Lead Handoff" to create a customer handoff event.`;
+            }
+            return `I can help with inventory at ${business} (${location}). Ask by price range, body type, powertrain (FWD/RWD/AWD/4WD), or specific make/model.`;
+        }
+
+        function sendChatSimulatorMessage() {
+            const input = document.getElementById('chat-sim-input');
+            if (!input) return;
+            const text = (input.value || '').trim();
+            if (!text) return;
+
+            addChatMessage('user', text);
+            const response = getChatSimulatorResponse(text);
+            setTimeout(() => addChatMessage('bot', response), 220);
+            input.value = '';
+        }
+
+        function simulateLeadHandoff() {
+            const business = document.getElementById('chat-sim-business')?.value || 'Summit Automotive Group';
+            const location = document.getElementById('chat-sim-location')?.value || 'Denver';
+            addChatMessage('bot', `Lead handoff created: customer inquiry routed to ${business} (${location}) sales queue.`);
+        }
+
+        function resetChatSimulator() {
+            const log = document.getElementById('chat-sim-log');
+            const input = document.getElementById('chat-sim-input');
+            if (log) log.innerHTML = '';
+            if (input) input.value = '';
+            addChatMessage('bot', 'Chat simulator ready. Ask about inventory, powertrain, budget, or schedule a test drive.');
         }
 
         function extractUrlFromCurl(curlCommand) {
@@ -1176,9 +1561,14 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             initDatabaseFieldPicker();
+            loadDealershipOverview();
+            applyDealershipFilters();
+            resetChatSimulator();
         });
     </script>
 </body>
 </html>
+
+
 
 
