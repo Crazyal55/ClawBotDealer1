@@ -53,6 +53,9 @@
             if (route === 'database') {
                 loadDatabaseRows();
             }
+            if (route === 'settings') {
+                loadChatDashboard();
+            }
         }
 
         let inventoryRowsCache = [];
@@ -275,6 +278,19 @@
             }
         }
 
+        async function runDatabaseQueryPrompt() {
+            const defaultQuery = 'SELECT id, vin, year, make, model, price, quality_score FROM vehicles ORDER BY scraped_at DESC LIMIT 25';
+            const raw = window.prompt('Enter a read-only SQL query (SELECT only):', defaultQuery);
+            if (!raw) return;
+            const query = String(raw).trim();
+            if (!/^select\s+/i.test(query)) {
+                setInlineStatus('database-status', 'Only SELECT queries are allowed in UI runner.', 'error');
+                return;
+            }
+            setInlineStatus('database-status', `Query captured: ${query}`, 'success');
+            alert('Query runner backend is not exposed yet. Captured query has been validated as SELECT-only.');
+        }
+
         function buildDatabasePayloadTemplate(row = {}) {
             return {
                 vin: row.vin || '',
@@ -481,6 +497,11 @@
             }
         }
 
+        async function refreshDealershipSnapshot() {
+            await loadDealershipOverview();
+            applyDealershipFilters();
+        }
+
         function applyDealershipFilters() {
             const business = document.getElementById('dealership-business-filter')?.value || '';
             const location = document.getElementById('dealership-location-filter')?.value || '';
@@ -576,6 +597,54 @@
             if (input) input.value = '';
             setInlineStatus('chat-status', 'Chat API scaffold mode.', 'muted');
             addChatMessage('bot', 'Chat simulator ready. Ask about inventory, powertrain, budget, or schedule a test drive.');
+        }
+
+        async function loadChatDashboard() {
+            const chatsValue = document.getElementById('settings-past-chats');
+            const customersValue = document.getElementById('settings-unique-customers');
+            const tbody = document.getElementById('settings-chat-table-body');
+            setInlineStatus('settings-chat-status', 'Loading chat sessions...', 'muted');
+            if (!chatsValue || !customersValue || !tbody) return;
+
+            try {
+                const response = await fetch('/api/chat/sessions?limit=50');
+                if (!response.ok) throw new Error('Chat sessions API unavailable');
+                const payload = await response.json();
+                if (!payload.success) throw new Error(payload.message || 'Chat sessions request failed');
+                const sessions = Array.isArray(payload.sessions) ? payload.sessions : [];
+
+                chatsValue.textContent = String(sessions.length);
+                const customers = new Set(
+                    sessions
+                        .map((s) => String(s.customer_name || '').trim())
+                        .filter(Boolean)
+                );
+                customersValue.textContent = String(customers.size);
+
+                tbody.innerHTML = '';
+                sessions.slice(0, 25).forEach((s) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${textValue(s.session_key)}</td>
+                        <td>${textValue(s.customer_name || 'Unknown')}</td>
+                        <td>Inventory Q&A</td>
+                        <td>${textValue(s.business || 'Unknown')}</td>
+                        <td>${textValue(s.location || 'Unknown')}</td>
+                        <td>${Number(s.message_count || 0) > 0 ? 'Active' : 'Open'}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                if (!sessions.length) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = '<td colspan="6">No chat sessions found yet.</td>';
+                    tbody.appendChild(tr);
+                }
+
+                setInlineStatus('settings-chat-status', `Loaded ${sessions.length} chat sessions.`, 'success');
+            } catch (error) {
+                setInlineStatus('settings-chat-status', `Chat dashboard load failed: ${error.message}`, 'error');
+            }
         }
 
         function extractUrlFromCurl(curlCommand) {
@@ -815,10 +884,12 @@
             document.getElementById('database-add-btn')?.addEventListener('click', createDatabaseVehicle);
             document.getElementById('database-edit-btn')?.addEventListener('click', updateSelectedDatabaseVehicle);
             document.getElementById('database-delete-btn')?.addEventListener('click', deleteSelectedDatabaseVehicle);
+            document.getElementById('database-run-query-btn')?.addEventListener('click', runDatabaseQueryPrompt);
 
             document.getElementById('dealership-business-filter')?.addEventListener('change', applyDealershipFilters);
             document.getElementById('dealership-location-filter')?.addEventListener('change', applyDealershipFilters);
             document.getElementById('dealership-sort-field')?.addEventListener('change', applyDealershipFilters);
+            document.getElementById('dealership-refresh-btn')?.addEventListener('click', refreshDealershipSnapshot);
 
             document.getElementById('chat-reset-btn')?.addEventListener('click', resetChatSimulator);
             document.getElementById('chat-send-btn')?.addEventListener('click', sendChatSimulatorMessage);
@@ -836,6 +907,7 @@
             loadDatabaseRows();
             loadDealershipOverview();
             applyDealershipFilters();
+            loadChatDashboard();
             resetChatSimulator();
             addScraperHistoryEntry({
                 time: '--',

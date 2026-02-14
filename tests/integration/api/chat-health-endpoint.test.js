@@ -22,7 +22,7 @@ jest.mock('../../../scraper', () => ({
 }));
 
 const DatabasePG = require('../../../db_pg');
-const { app } = require('../../../server_pg');
+const { app, db } = require('../../../server_pg');
 
 describe('Chat + DB Health API Endpoints', () => {
   let baseUrl;
@@ -37,7 +37,7 @@ describe('Chat + DB Health API Endpoints', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    dbInstance = DatabasePG.mock.instances[0];
+    dbInstance = db;
   });
 
   afterAll(async () => {

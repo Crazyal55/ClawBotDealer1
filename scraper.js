@@ -541,42 +541,39 @@ class CarScraper {
   }
 
   extractText($, selectors, multiline = false) {
-    // $ can be either root Cheerio object or a scoped element ($el)
-    // Check if $ has .find() method (root object) or not (scoped element)
-    const isRoot = typeof $.find === 'function';
-
     for (const selector of selectors) {
       if (selector.includes(':contains')) {
         // Handle :contains pseudo-selector
         const parts = selector.split(':contains(');
         const baseSelector = parts[0] || '*';
         const searchText = parts[1]?.replace(/['"]?\)/, '');
+        const root = $.find ? $ : cheerio.load($.html ? $.html() : '');
 
-        if (isRoot) {
-          $(baseSelector).each((i, el) => {
-          const text = $(el).text();
-          if (text.toLowerCase().includes(searchText.toLowerCase())) {
-            // Try to find the value (text after the label)
-            const parent = $(el).parent();
-            const fullText = parent.text();
+        let foundValue = null;
+        root(baseSelector).each((i, el) => {
+          if (foundValue) return;
+          const text = root(el).text();
+          if (!searchText || !text.toLowerCase().includes(searchText.toLowerCase())) return;
 
-            // Common patterns: "Label: Value", "Label Value", etc.
-            const patterns = [
-              new RegExp(`[:\\s]+(.+)`, 'i'),
-              new RegExp(`${searchText}[\\s:]+(.+)`, 'i')
-            ];
+          const parent = root(el).parent();
+          const fullText = parent.text();
+          const patterns = [
+            new RegExp(`[:\\s]+(.+)`, 'i'),
+            new RegExp(`${searchText}[\\s:]+(.+)`, 'i')
+          ];
 
-            for (const pattern of patterns) {
-              const match = fullText.match(pattern);
-              if (match && match[1]) {
-                const value = match[1].trim().substring(0, 200);
-                if (value && value.toLowerCase() !== searchText.toLowerCase()) {
-                  return multiline ? value : value.split('\n')[0].trim();
-                }
+          for (const pattern of patterns) {
+            const match = fullText.match(pattern);
+            if (match && match[1]) {
+              const value = match[1].trim().substring(0, 200);
+              if (value && (!searchText || value.toLowerCase() !== searchText.toLowerCase())) {
+                foundValue = multiline ? value : value.split('\n')[0].trim();
+                break;
               }
             }
           }
         });
+        if (foundValue) return foundValue;
       } else {
         const $el = $.find ? $.find(selector) : $(selector);
         if ($el.length > 0) {

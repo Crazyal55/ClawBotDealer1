@@ -1116,7 +1116,7 @@
                 <div class="content-panel">
                     <div class="panel-header">
                         <h2 class="panel-title">Database</h2>
-                        <div class="panel-actions"><button class="btn btn-secondary" disabled title="Coming soon">Export Data (Coming Soon)</button><button class="btn btn-secondary" disabled title="Coming soon">Run Query (Coming Soon)</button></div>
+                        <div class="panel-actions"><button class="btn btn-secondary" disabled title="Coming soon">Export Data (Coming Soon)</button><button id="database-run-query-btn" class="btn btn-secondary">Run Query</button></div>
                     </div>
                     <p class="panel-subtitle">View relational data and inspect indexed inventory rows.</p>
                     <div class="split-grid">
@@ -1187,7 +1187,7 @@
                 <div class="content-panel">
                     <div class="panel-header">
                         <h2 class="panel-title">Dealership Navigation</h2>
-                        <div class="panel-actions"><button class="btn btn-secondary" disabled title="Coming soon">Refresh Snapshot (Coming Soon)</button></div>
+                        <div class="panel-actions"><button id="dealership-refresh-btn" class="btn btn-secondary">Refresh Snapshot</button></div>
                     </div>
                     <p class="panel-subtitle">Sort and filter by business, location, and operating measures.</p>
                     <div id="dealership-status" class="inline-status">Loading dealership overview...</div>
@@ -1329,26 +1329,23 @@
                         <div class="panel-actions"><button class="btn btn-secondary" disabled title="Coming soon">Export Transcripts (Coming Soon)</button></div>
                     </div>
                     <p class="panel-subtitle">Monitor conversations, customer interactions, and setup wizard progress.</p>
+                    <div id="settings-chat-status" class="inline-status">Loading chat dashboard...</div>
 
                     <div class="split-grid">
                         <div class="info-card">
                             <div class="info-title">Past Chats (7d)</div>
-                            <div class="info-value">124</div>
+                            <div id="settings-past-chats" class="info-value">-</div>
                         </div>
                         <div class="info-card">
                             <div class="info-title">Unique Customers</div>
-                            <div class="info-value">49</div>
+                            <div id="settings-unique-customers" class="info-value">-</div>
                         </div>
                     </div>
 
                     <div class="table-wrap" style="margin-top: var(--spacing-md);">
                         <table class="data-table">
                             <thead><tr><th>Chat ID</th><th>Customer</th><th>Intent</th><th>Business</th><th>Location</th><th>Status</th></tr></thead>
-                            <tbody>
-                                <tr><td>CHAT-1024</td><td>Sarah M.</td><td>Find AWD SUV under $35k</td><td>Summit Automotive Group</td><td>Denver</td><td>Closed</td></tr>
-                                <tr><td>CHAT-1025</td><td>Mike R.</td><td>Compare F-150 vs Silverado</td><td>Summit Automotive Group</td><td>Lakewood</td><td>Escalated</td></tr>
-                                <tr><td>CHAT-1026</td><td>Anna T.</td><td>Schedule test drive</td><td>Metro Auto Holdings</td><td>Dallas</td><td>Open</td></tr>
-                            </tbody>
+                            <tbody id="settings-chat-table-body"></tbody>
                         </table>
                     </div>
 
